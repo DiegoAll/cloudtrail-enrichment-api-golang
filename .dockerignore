@@ -1,0 +1,28 @@
+
+
+.git/
+
+# ignorar archivos de compilacion
+bin/
+obj/
+
+
+# Ignorar archivos de configuracion sensibles
+.env
+
+
+# Ignorar archivos de prueba
+tests/ 
+
+
+# Ignorar documentacion
+README.md
+docs/
+
+
+#Archivos json
+appsettings.json
+*.json
+
+
+
