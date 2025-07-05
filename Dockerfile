@@ -12,6 +12,9 @@ RUN go mod download
 # Copia todo el código fuente de la aplicación
 COPY cmd ./cmd
 COPY internal ./internal
+COPY database ./database
+COPY models ./models
+COPY services ./services
 # COPY cert/ ./cert/
 
 # Construye la aplicación Go

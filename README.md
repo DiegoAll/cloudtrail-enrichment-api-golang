@@ -21,9 +21,12 @@ Security monitoring REST API that performs IP geolocation enrichment based on AW
 
 > Disclaimer
 
-# Secrets atlas
-# chal
+- JWT Based authentication using middleware (token type, custom claims)
+- Logs
+- Secrets Management
+- HTTPS Transport Cipher
+- HTTP security headers, CORS
+- Strong cryptography 4 JWT, Hashing password etc
 
-- JWT Based authentication
+# Security by Design
 
-- 

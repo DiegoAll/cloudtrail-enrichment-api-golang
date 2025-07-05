@@ -1,24 +1,43 @@
 version: '3.8'
 
 services:
-
-  db:
+  db_postgres:
+    hostname: auth_db
     build:
-      context: ./database # El contexto de construcción es la nueva carpeta 'db'
-      dockerfile: Dockerfile.mongo # Busca el Dockerfile dentro de './db'
+      context: ./database/postgresql 
+      dockerfile: Dockerfile.postgresql
+    container_name: authentication_db
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRESQL_DATABASE: authdb
+      POSTGRESQL_USER: user
+      POSTGRESQL_PASSWORD: pass
+      POSTGRESQL_ROOT_PASSWORD: pass
+    volumes:
+      # Docker creará la carpeta './db-data/postgres_data' en tu proyecto si no existe.
+      - ./db-data/postgres_data:/bitnami/postgresql/:rw
+
+  db_mongo:
+    hostname: enrich_api_db
+    build:
+      context: ./database/mongo
+      dockerfile: Dockerfile.mongo
     container_name: enrichment_api_db
     ports:
-      - "27017:27017" # Opcional: Mapea el puerto de la DB al host (útil para herramientas externas)
+      - "27017:27017" 
     environment:
-      POSTGRES_USER: user # Nombre de usuario de la base de datos
-      POSTGRES_PASSWORD: password # Contraseña del usuario
-      POSTGRES_DB: mydatabase # Nombre de la base de datos
-      #PG_DATA: /var/lib/postgresql/data
+      MONGO_INITDB_ROOT_USERNAME: user 
+      MONGO_INITDB_ROOT_PASSWORD: password 
+      MONGO_INITDB_DATABASE: mydatabase
     volumes:
       # - apigo:/var/lib/postgresql/data #named volume
       # *** CAMBIO AQUÍ: Ahora usamos un bind mount ***
       # Se montará la carpeta './db-data/postgres' de tu host al '/var/lib/postgresql/data' del contenedor
       # Docker creará la carpeta './db-data/postgres' en tu proyecto si no existe.
+
+
+      # Bind mount para persistir los datos de MongoDB en tu host
       - ./db-data/mongo_data:/data/db:rw
 
       # Puedes descomentar la siguiente línea SI NO ESTÁS USANDO el COPY init.sql en db/Dockerfile
@@ -27,22 +46,27 @@ services:
       # y causaría el error "not a directory" si se deja activa.
       # - ./sql/init.sql:/docker-entrypoint-initdb.d/init.sql
 # ... dentro de service: db
-
-
-
-
   api:
+    hostname: enrich_api
     build:
-      context: . # El contexto de construcción es el directorio actual
-      dockerfile: Dockerfile # Usa el Dockerfile de la API (simplificado o multi-stage, según tu elección)
+      context: .
+      dockerfile: Dockerfile
     container_name: enrichment_api
     ports:
-      - "8080:8080" # Mapea el puerto 8080 del host al puerto 8080 del contenedor
-    # environment:
-      # PORT: 8080
+      - "8081:8081"
+    environment:
+      MONGO_URI: mongodb://user:password@db:27017/mydatabase?authSource=admin
+      PORT: 8081
       # DATABASE_URL: postgres://user:password@db:5432/mydatabase?sslmode=disable
+      DATABASE_HOST: auth_db # El hostname 'auth_db' debe coincidir con el 'hostname' del servicio db_postgres
+      DATABASE_PORT: 5432
+      DATABASE_USERNAME: user
+      DATABASE_PASSWORD: pass
+      DATABASE_NAME: authdb
+      DATABASE_SSLMODE: disable # O 'require' si usas SSL
     depends_on:
-      - db # Asegura que la base de datos se inicie antes que la aplicación
+      - db_mongo
+      - db_postgres
 
 # *** CAMBIO AQUÍ: Eliminamos la sección de volúmenes nombrados ***
 # Ya no necesitamos definir 'pgdata' porque estamos usando un bind mount directo.

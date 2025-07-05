@@ -2,15 +2,16 @@ package main
 
 import (
 	"cloudtrail-enrichment-api-golang/cmd/api/controllers"
+	"cloudtrail-enrichment-api-golang/database/mongo"
+	"cloudtrail-enrichment-api-golang/database/postgresql"
 	"cloudtrail-enrichment-api-golang/internal/config"
 	"cloudtrail-enrichment-api-golang/internal/middleware"
 	"cloudtrail-enrichment-api-golang/internal/pkg/logger"
 	"cloudtrail-enrichment-api-golang/internal/pkg/token"
 	"cloudtrail-enrichment-api-golang/internal/repository"
 	"cloudtrail-enrichment-api-golang/services"
+	"context"
 
-	//"cloudtrail-enrichment-api-golang/services"
-	//mongo package
 	"crypto/tls"
 	"database/sql"
 	"fmt"
@@ -28,6 +29,7 @@ type application struct {
 	// productsController *controllers.ProductsController
 	authController   *controllers.AuthController
 	systemController *controllers.SystemController
+	//enrichmentController *controllers.EnrichmentController
 }
 
 func main() {
@@ -68,11 +70,25 @@ func main() {
 		}
 	}()
 
-	// Inicialización del repositorio de autenticación
-	//authRepo := postgresql.NewAuthPostgresRepository(db)
-	authRepo := mongo.NewAuthPostgresRepository(db)
+	// --- Conexión a MongoDB (para enriquecimiento) ---
+	mongoClient, err := mongo.NewMongoClient(config)
+	if err != nil {
+		log.Fatal("Error al conectar a MongoDB:", err)
+		logger.ErrorLog.Fatalf("Error al conectar a MongoDB: %v", err)
+	}
+	defer func() {
+		if err := mongoClient.Client.Disconnect(context.Background()); err != nil {
+			logger.ErrorLog.Printf("Error al cerrar la conexión a MongoDB: %v", err)
+		}
+	}()
+	logger.InfoLog.Println("Conexión a MongoDB establecida exitosamente.")
 
-	repository.SetAuthRepository(authRepo) // Setear la implementación global del AuthRepo
+	// Inicialización del repositorio de autenticación
+	authRepo := postgresql.NewAuthPostgresRepository(db)
+	enrichRepo := mongo.NewEnrichMongoRepository(mongoClient)
+
+	repository.SetAuthRepository(authRepo)         // Setear la implementación global del AuthRepo
+	repository.SetEnrichmentRepository(enrichRepo) // Setear la implementación global del AuthRepo
 
 	// AHORA: Creamos una instancia de JWTService, no de JWTToken
 	jwtService := token.NewJWTService(config, authRepo) // CAMBIO IMPORTANTE AQUÍ
@@ -84,6 +100,8 @@ func main() {
 	// Inicialización de controladores
 	authController := controllers.NewAuthController(authService)
 	systemController := controllers.NewSystemController()
+	// enrichmentController := controllers.NewEnrichmentController(enrichService)
+
 	// PASAMOS jwtService al middleware
 	mw := middleware.NewMiddleware(jwtService, authService) // CAMBIO IMPORTANTE AQUÍ
 
@@ -95,6 +113,7 @@ func main() {
 		// productsController: productsController,
 		authController:   authController,
 		systemController: systemController,
+		// enrichmentController: enrichmentController,
 	}
 
 	err = app.serve()

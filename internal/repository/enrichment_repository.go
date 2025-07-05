@@ -1,15 +1,13 @@
 package repository
 
 import (
+	"cloudtrail-enrichment-api-golang/models"
 	"context"
-
-	"github.com/sigstore/rekor/pkg/generated/models"
-	//"github.com/sigstore/rekor/pkg/generated/models"
 )
 
 type EnrichmentRepository interface {
-	InsertLog(ctx context.Context, log *models.LogEntry) error
-	GetLatestLogs(ctx context.Context) ([]*models.LogEntry, error)
+	InsertLog(ctx context.Context, trin *models.EnrichedEventRecord) error
+	GetLatestLogs(ctx context.Context) ([]*models.EnrichedEventRecord, error)
 }
 
 // Declaramos una variable global para la instancia del repositorio de enriquecimiento.
@@ -21,11 +19,12 @@ func SetEnrichmentRepository(repo EnrichmentRepository) {
 }
 
 // InsertLog es una función auxiliar que llama al método InsertLog de la implementación actual.
-func InsertLog(ctx context.Context, log *models.LogEntry) error {
+func InsertLog(ctx context.Context, log *models.EnrichedEventRecord) error {
 	return EnrichmentRepo.InsertLog(ctx, log)
 }
 
 // GetLatestLogs es una función auxiliar que llama al método GetLatestLogs de la implementación actual.
-func GetLatestLogs(ctx context.Context) ([]*models.LogEntry, error) {
+// POR QUE EL ERROR ESTA ADENTRO?
+func GetLatestLogs(ctx context.Context) ([]*models.EnrichedEventRecord, error) {
 	return EnrichmentRepo.GetLatestLogs(ctx)
 }

@@ -1,1 +1,112 @@
 package mongo
+
+import (
+	"cloudtrail-enrichment-api-golang/internal/config"
+	"cloudtrail-enrichment-api-golang/internal/pkg/logger"
+	"cloudtrail-enrichment-api-golang/models"
+	"context"
+	"fmt"
+	"time"
+
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
+	"go.mongodb.org/mongo-driver/mongo/readpref"
+)
+
+// MongoInstance encapsula la conexión a MongoDB y la colección específica.
+type MongoInstance struct {
+	Client     *mongo.Client
+	Collection *mongo.Collection
+}
+
+// NewMongoClient establece una nueva conexión a MongoDB y devuelve una instancia de MongoInstance.
+func NewMongoClient(cfg *config.Config) (*MongoInstance, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), cfg.DatabaseConfig.DBTimeout)
+	defer cancel()
+
+	mongoURI := fmt.Sprintf("mongodb://%s:%d", cfg.DatabaseConfig.Host, cfg.DatabaseConfig.Port)
+	if cfg.DatabaseConfig.Username != "" && cfg.DatabaseConfig.Password != "" {
+		mongoURI = fmt.Sprintf("mongodb://%s:%s@%s:%d", cfg.DatabaseConfig.Username, cfg.DatabaseConfig.Password, cfg.DatabaseConfig.Host, cfg.DatabaseConfig.Port)
+	}
+
+	clientOptions := options.Client().ApplyURI(mongoURI)
+	client, err := mongo.Connect(ctx, clientOptions)
+	if err != nil {
+		logger.ErrorLog.Printf("Error al conectar a MongoDB: %v", err)
+		return nil, fmt.Errorf("error al conectar a MongoDB: %w", err)
+	}
+
+	// Haz ping a la base de datos para verificar la conexión
+	err = client.Ping(ctx, readpref.Primary())
+	if err != nil {
+		logger.ErrorLog.Printf("Error al hacer ping a MongoDB: %v", err)
+		return nil, fmt.Errorf("error al hacer ping a MongoDB: %w", err)
+	}
+
+	logger.InfoLog.Println("Conexión a MongoDB establecida exitosamente.")
+
+	// Aquí asumimos una base de datos y colección específicas para los eventos de enriquecimiento
+	collection := client.Database(cfg.DatabaseConfig.Database).Collection("enriched_events")
+
+	return &MongoInstance{Client: client, Collection: collection}, nil
+}
+
+// EnrichmentMongoRepository implementa la interfaz EnrichmentRepository para MongoDB.
+type EnrichmentMongoRepository struct {
+	mongoInstance *MongoInstance
+}
+
+// NewEnrichMongoRepository crea una nueva instancia de EnrichmentMongoRepository.
+func NewEnrichMongoRepository(mi *MongoInstance) *EnrichmentMongoRepository {
+	return &EnrichmentMongoRepository{mongoInstance: mi}
+}
+
+// InsertLog inserta un nuevo registro de evento enriquecido en MongoDB.
+func (m *EnrichmentMongoRepository) InsertLog(ctx context.Context, event *models.EnrichedEventRecord) error {
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second) // Usar el timeout del contexto, o definir uno si es nil
+	defer cancel()
+
+	_, err := m.mongoInstance.Collection.InsertOne(ctx, event)
+	if err != nil {
+		logger.ErrorLog.Printf("Error al insertar evento enriquecido en MongoDB: %v", err)
+		return fmt.Errorf("error al insertar evento enriquecido: %w", err)
+	}
+	logger.InfoLog.Printf("Evento enriquecido insertado en MongoDB. EventSource: %s", event.EventSource)
+	return nil
+}
+
+// GetLatestLogs recupera los últimos 10 registros de eventos enriquecidos de MongoDB.
+func (m *EnrichmentMongoRepository) GetLatestLogs(ctx context.Context) ([]*models.EnrichedEventRecord, error) {
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second) // Usar el timeout del contexto, o definir uno si es nil
+	defer cancel()
+
+	var events []*models.EnrichedEventRecord
+	findOptions := options.Find()
+	findOptions.SetSort(bson.D{{Key: "eventTime", Value: -1}}) // Ordenar por fecha de evento descendente (-1 most recent)
+	findOptions.SetLimit(10)                                   // Limitar a los últimos 10
+
+	cursor, err := m.mongoInstance.Collection.Find(ctx, bson.D{}, findOptions)
+	if err != nil {
+		logger.ErrorLog.Printf("Error al obtener los últimos eventos enriquecidos de MongoDB: %v", err)
+		return nil, fmt.Errorf("error al obtener los últimos eventos enriquecidos: %w", err)
+	}
+	defer cursor.Close(ctx)
+
+	for cursor.Next(ctx) {
+		var event models.EnrichedEventRecord
+		if err := cursor.Decode(&event); err != nil {
+			logger.ErrorLog.Printf("Error al decodificar evento de MongoDB: %v", err)
+			return nil, fmt.Errorf("error al decodificar evento: %w", err)
+		}
+		events = append(events, &event)
+	}
+
+	if err := cursor.Err(); err != nil {
+		logger.ErrorLog.Printf("Error en el cursor de MongoDB: %v", err)
+		return nil, fmt.Errorf("error en el cursor de MongoDB: %w", err)
+	}
+
+	logger.InfoLog.Println("Últimos 10 eventos enriquecidos obtenidos de MongoDB.")
+	return events, nil
+}
