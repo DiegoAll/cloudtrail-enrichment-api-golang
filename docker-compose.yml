@@ -4,9 +4,9 @@ services:
 
   db:
     build:
-      context: ./db # El contexto de construcción es la nueva carpeta 'db'
-      dockerfile: Dockerfile # Busca el Dockerfile dentro de './db'
-    container_name: books_catalog_db
+      context: ./database # El contexto de construcción es la nueva carpeta 'db'
+      dockerfile: Dockerfile.mongo # Busca el Dockerfile dentro de './db'
+    container_name: enrichment_api_db
     ports:
       - "27017:27017" # Opcional: Mapea el puerto de la DB al host (útil para herramientas externas)
     environment:
