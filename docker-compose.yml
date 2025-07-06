@@ -56,9 +56,19 @@ services:
     ports:
       - "9090:9090"
     environment:
-      MONGO_URI: mongodb://user:password@enrich_api_db:27017/mydatabase?authSource=admin
       PORT: 9090
+      # MONGO_URI: mongodb://user:password@enrich_api_db:27017/mydatabase?authSource=admin
+
+      MONGO_USERNAME: user             # <--- DESCOMENTAR (debe coincidir con MONGO_INITDB_ROOT_USERNAME)
+      MONGO_PORT: 27017                # <--- DESCOMENTAR
+
+      MONGO_HOST: enrich_api_db
+      MONGO_PASSWORD: password
+      MONGO_DATABASE: mydatabase
+      MONGO_DB_TIMEOUT: 10000000000
+
       # DATABASE_URL: postgres://user:password@db:5432/mydatabase?sslmode=disable
+      # MONGO_DATABASE: mydatabase
       DATABASE_HOST: auth_db # El hostname 'auth_db' debe coincidir con el 'hostname' del servicio db_postgres
       DATABASE_PORT: 5432
       DATABASE_USERNAME: user

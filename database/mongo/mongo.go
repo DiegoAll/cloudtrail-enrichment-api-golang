@@ -64,7 +64,7 @@ func NewMongoClient(cfg *config.Config) (*MongoInstance, error) {
 	logger.InfoLog.Println("Conexión a MongoDB establecida exitosamente.")
 
 	// Aquí asumimos una base de datos y colección específicas para los eventos de enriquecimiento
-	collection := client.Database(cfg.DatabaseConfig.Database).Collection("enriched_events")
+	collection := client.Database(cfg.MongoDBConfig.Database).Collection("enriched_events")
 
 	return &MongoInstance{Client: client, Collection: collection}, nil
 }
