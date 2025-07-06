@@ -19,10 +19,18 @@
     "port": 5432,
     "username": "user",
     "password": "pass",
-    "database": "e_commerce",
+    "database": "auth_db",
     "ssl_mode": "disable",
     "db_timeout": 5000000000,
     "max_open_conns": 100
+  },
+  "mongodb_config": {
+    "host": "localhost",
+    "port": 27017,
+    "username": "user",
+    "password": "password",
+    "database": "mydatabase",
+    "db_timeout": 10000000000
   },
   "auth_config": {
     "jwt_secret": "secret",

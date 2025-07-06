@@ -65,6 +65,8 @@ services:
       DATABASE_PASSWORD: pass
       DATABASE_NAME: authdb
       DATABASE_SSLMODE: disable # O 'require' si usas SSL
+      DB_TIMEOUT: 5000000000 # En nanosegundos (5 segundos)
+      MAX_OPEN_CONNS: 100
 
       JWT_SECRET: secret
       JWT_PRIVATE_KEY: dsd
@@ -72,7 +74,8 @@ services:
       HASH_COST: 10
       TOKEN_DURATION: 86400000000000 # En nanosegundos para time.Duration
 
-      # SCOPE: local
+      SCOPE: prod
+      # SCOPE: test
     depends_on:
       - db_mongo
       - db_postgres

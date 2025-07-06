@@ -6,6 +6,7 @@ Security monitoring REST API that performs IP geolocation enrichment based on AW
 # Scopes:
 
     export SCOPE=local
+    SCOPE=local go run cmd/api/main.go
 
 
 # Execute application
@@ -33,6 +34,7 @@ Security monitoring REST API that performs IP geolocation enrichment based on AW
 - HTTPS Transport Cipher
 - HTTP security headers, CORS
 - Strong cryptography 4 JWT, Hashing password etc
+- CSRF Token Header <> X-CSRF-Token
 
 ## Secure Deployment Practices 
 
@@ -42,3 +44,16 @@ Security monitoring REST API that performs IP geolocation enrichment based on AW
 ## Security by Design
 
 - TM
+
+
+Tener una DB en la nube es super caro 
+
+GCLOUD TOMBAS CIBERSFISICAS CAGADAS COLOMBIA
+BUSCAR AWS
+
+HOMOLOGAR ESTRUCTURA CONNECTION STRING MONGO CON PG. (Global var)
+
+
+ALgunas variables no se pueden agregar de forma parametrica, si se puede hacer una sustitucion directa si.
+
+De lo contrario son parametros para un generador.

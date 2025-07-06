@@ -6,6 +6,7 @@ import (
 	"cloudtrail-enrichment-api-golang/models"
 	"context"
 	"fmt"
+	"os"
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
@@ -22,12 +23,28 @@ type MongoInstance struct {
 
 // NewMongoClient establece una nueva conexión a MongoDB y devuelve una instancia de MongoInstance.
 func NewMongoClient(cfg *config.Config) (*MongoInstance, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), cfg.DatabaseConfig.DBTimeout)
+	// Usar la configuración específica de MongoDB
+	mongoCfg := cfg.MongoDBConfig
+
+	ctx, cancel := context.WithTimeout(context.Background(), mongoCfg.DBTimeout)
 	defer cancel()
 
-	mongoURI := fmt.Sprintf("mongodb://%s:%d", cfg.DatabaseConfig.Host, cfg.DatabaseConfig.Port)
-	if cfg.DatabaseConfig.Username != "" && cfg.DatabaseConfig.Password != "" {
-		mongoURI = fmt.Sprintf("mongodb://%s:%s@%s:%d", cfg.DatabaseConfig.Username, cfg.DatabaseConfig.Password, cfg.DatabaseConfig.Host, cfg.DatabaseConfig.Port)
+	// Intentar obtener la MONGO_URI completa de las variables de entorno primero
+	mongoURI := os.Getenv("MONGO_URI")
+	if mongoURI == "" {
+		// Si MONGO_URI no está definida, construirla desde los parámetros individuales
+		mongoURI = fmt.Sprintf("mongodb://%s:%d", mongoCfg.Host, mongoCfg.Port)
+		if mongoCfg.Username != "" && mongoCfg.Password != "" {
+			mongoURI = fmt.Sprintf("mongodb://%s:%s@%s:%d", mongoCfg.Username, mongoCfg.Password, mongoCfg.Host, mongoCfg.Port)
+			// Se recomienda especificar authSource si usas credenciales de usuario/contraseña
+			mongoURI = fmt.Sprintf("%s/%s?authSource=admin", mongoURI, mongoCfg.Database)
+		} else {
+			// Si no hay credenciales, solo añadir la base de datos a la URI
+			mongoURI = fmt.Sprintf("%s/%s", mongoURI, mongoCfg.Database)
+		}
+		logger.InfoLog.Println("Construyendo MONGO_URI a partir de configuraciones individuales.")
+	} else {
+		logger.InfoLog.Println("Usando MONGO_URI desde variables de entorno para la conexión a MongoDB.")
 	}
 
 	clientOptions := options.Client().ApplyURI(mongoURI)

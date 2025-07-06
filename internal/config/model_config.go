@@ -5,6 +5,7 @@ import "time"
 type Config struct {
 	ServerConfig   ServerConfig   `json:"server_config"`
 	DatabaseConfig DatabaseConfig `json:"database_config"`
+	MongoDBConfig  MongoDBConfig  `json:"mongodb_config"`
 	AuthConfig     AuthConfig     `json:"auth_config"`
 }
 
