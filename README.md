@@ -2,6 +2,12 @@
 Security monitoring REST API that performs IP geolocation enrichment based on AWS CloudTrail logs.
 
 
+
+# Scopes:
+
+    export SCOPE=local
+
+
 # Execute application
 
     docker-compose down -v --rmi all
@@ -17,7 +23,7 @@ Security monitoring REST API that performs IP geolocation enrichment based on AW
 
 
 
-# Security practices
+## Secure Coding Practices
 
 > Disclaimer
 
@@ -28,5 +34,11 @@ Security monitoring REST API that performs IP geolocation enrichment based on AW
 - HTTP security headers, CORS
 - Strong cryptography 4 JWT, Hashing password etc
 
-# Security by Design
+## Secure Deployment Practices 
 
+- Container security (Bitnami images, )
+- Kubernetes security (Security context, )
+
+## Security by Design
+
+- TM

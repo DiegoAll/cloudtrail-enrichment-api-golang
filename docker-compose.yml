@@ -10,13 +10,14 @@ services:
     ports:
       - "5432:5432"
     environment:
-      POSTGRESQL_DATABASE: authdb
-      POSTGRESQL_USER: user
-      POSTGRESQL_PASSWORD: pass
-      POSTGRESQL_ROOT_PASSWORD: pass
+      POSTGRES_DB: authdb
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: pass
+      POSTGRES_INITDB_ARGS: "--auth-host=scram-sha-256"
     volumes:
       # Docker creará la carpeta './db-data/postgres_data' en tu proyecto si no existe.
-      - ./db-data/postgres_data:/bitnami/postgresql/:rw
+      # - ./db-data/postgres_data:/bitnami/postgresql/:rw
+      - ./db-data/postgres:/var/lib/postgresql/data:rw
 
   db_mongo:
     hostname: enrich_api_db
@@ -53,10 +54,10 @@ services:
       dockerfile: Dockerfile
     container_name: enrichment_api
     ports:
-      - "8081:8081"
+      - "9090:9090"
     environment:
-      MONGO_URI: mongodb://user:password@db:27017/mydatabase?authSource=admin
-      PORT: 8081
+      MONGO_URI: mongodb://user:password@enrich_api_db:27017/mydatabase?authSource=admin
+      PORT: 9090
       # DATABASE_URL: postgres://user:password@db:5432/mydatabase?sslmode=disable
       DATABASE_HOST: auth_db # El hostname 'auth_db' debe coincidir con el 'hostname' del servicio db_postgres
       DATABASE_PORT: 5432
@@ -64,6 +65,14 @@ services:
       DATABASE_PASSWORD: pass
       DATABASE_NAME: authdb
       DATABASE_SSLMODE: disable # O 'require' si usas SSL
+
+      JWT_SECRET: secret
+      JWT_PRIVATE_KEY: dsd
+      JWT_PUBLIC_KEY: dsd
+      HASH_COST: 10
+      TOKEN_DURATION: 86400000000000 # En nanosegundos para time.Duration
+
+      # SCOPE: local
     depends_on:
       - db_mongo
       - db_postgres

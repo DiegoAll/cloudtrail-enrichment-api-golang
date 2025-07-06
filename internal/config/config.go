@@ -28,7 +28,7 @@ func LoadConfig() (*Config, error) {
 	case "local":
 		//config.ServerConfig.Host = "localhost" // ?
 		// raw, err = os.ReadFile("./internal/config/scaffold_config")
-		raw, err = os.ReadFile("/home/diegoall/MAESTRIA_ING/secure-golang-scaffolding/internal/config/scaffold_config")
+		raw, err = os.ReadFile("/home/diegoall/Projects/cloudtrail-enrichment-api-golang/internal/config/scaffold_config")
 		fmt.Println("RAW", raw)
 		// raw, err = os.ReadFile("./local/scaffold_config")
 	case "test":

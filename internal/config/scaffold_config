@@ -16,7 +16,7 @@
   },
   "database_config": {
     "host": "localhost",
-    "port": 54326,
+    "port": 5432,
     "username": "user",
     "password": "pass",
     "database": "e_commerce",

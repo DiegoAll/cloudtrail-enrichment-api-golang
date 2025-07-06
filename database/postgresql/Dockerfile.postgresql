@@ -1,3 +1,4 @@
-FROM bitnami/postgresql:latest
+# FROM bitnami/postgresql:latest
+FROM postgres:15-alpine
 
 COPY postgres_up.sql /docker-entrypoint-initdb.d/1.sql
