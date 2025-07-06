@@ -68,6 +68,7 @@ func LoadConfig() (*Config, error) {
 		config.MongoDBConfig.Username = os.Getenv("MONGO_USERNAME")
 		config.MongoDBConfig.Password = os.Getenv("MONGO_PASSWORD")
 		config.MongoDBConfig.Database = os.Getenv("MONGO_DATABASE")
+		config.MongoDBConfig.Collection = os.Getenv("MONGO_COLLECTION")
 		mongoDBTimeout, _ := strconv.ParseInt(os.Getenv("MONGO_DB_TIMEOUT"), 10, 64)
 		config.MongoDBConfig.DBTimeout = time.Duration(mongoDBTimeout)
 

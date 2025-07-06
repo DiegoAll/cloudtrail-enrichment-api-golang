@@ -41,14 +41,15 @@ type DatabaseConfig struct {
 }
 
 type MongoDBConfig struct {
-	Host         string        `json:"host"`
-	Port         int           `json:"port"`
-	Username     string        `json:"username"`
-	Password     string        `json:"password"`
-	Database     string        `json:"database"`
-	SSLMode      string        `json:"ssl_mode"`
-	DBTimeout    time.Duration `json:"db_timeout"`
-	MaxOpenConns int           `json:"max_open_conns"`
+	Host       string `json:"host"`
+	Port       int    `json:"port"`
+	Username   string `json:"username"`
+	Password   string `json:"password"`
+	Database   string `json:"database"`
+	Collection string `json:"collection"` // ¡Nuevo campo para el nombre de la colección!
+	// SSLMode      string        `json:"ssl_mode"`
+	DBTimeout time.Duration `json:"db_timeout"`
+	// MaxOpenConns int           `json:"max_open_conns"`
 }
 
 type AuthConfig struct {

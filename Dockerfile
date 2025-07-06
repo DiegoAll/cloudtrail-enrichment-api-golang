@@ -27,7 +27,8 @@ RUN GOOS=linux go build -o enrichment-api ./cmd/api
 # RUN apk --no-cache add ca-certificates
 
 # Expone el puerto en el que la aplicación Go escuchará
-EXPOSE 8080
+# Creo que no es necesario, con 9090 en el compose sube.
+EXPOSE 9090  
 
 # Comando para iniciar la aplicación cuando el contenedor se inicie
 CMD ["./enrichment-api"]

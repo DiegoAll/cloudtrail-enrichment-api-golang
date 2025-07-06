@@ -70,22 +70,40 @@ func main() {
 		}
 	}()
 
-	// --- Conexión a MongoDB (para enriquecimiento) ---
-	mongoClient, err := mongo.NewMongoClient(config)
+	mongoURI := mongo.BuildMongoURI(&config.MongoDBConfig)
+
+	mongoClient, err := mongo.NewMongoClient(mongoURI, config.MongoDBConfig.DBTimeout)
 	if err != nil {
 		log.Fatal("Error al conectar a MongoDB:", err)
 		logger.ErrorLog.Fatalf("Error al conectar a MongoDB: %v", err)
 	}
+	// logger.InfoLog.Println("Conexión a MongoDB establecida exitosamente.")
+
 	defer func() {
-		if err := mongoClient.Client.Disconnect(context.Background()); err != nil {
+		// Desconectar el cliente de MongoDB al finalizar
+		if err := mongoClient.Disconnect(context.Background()); err != nil {
 			logger.ErrorLog.Printf("Error al cerrar la conexión a MongoDB: %v", err)
 		}
 	}()
-	logger.InfoLog.Println("Conexión a MongoDB establecida exitosamente.")
+
+	// --- Conexión a MongoDB (para enriquecimiento) ---
+	// mongoClient, err := mongo.NewMongoClient(config)
+	// if err != nil {
+	// 	log.Fatal("Error al conectar a MongoDB:", err)
+	// 	logger.ErrorLog.Fatalf("Error al conectar a MongoDB: %v", err)
+	// }
+	// defer func() {
+	// 	if err := mongoClient.Client.Disconnect(context.Background()); err != nil {
+	// 		logger.ErrorLog.Printf("Error al cerrar la conexión a MongoDB: %v", err)
+	// 	}
+	// }()
+	// logger.InfoLog.Println("Conexión a MongoDB establecida exitosamente.")
 
 	// Inicialización del repositorio de autenticación
 	authRepo := postgresql.NewAuthPostgresRepository(db)
-	enrichRepo := mongo.NewEnrichMongoRepository(mongoClient)
+
+	// Antes recibia solo mongoClient
+	enrichRepo := mongo.NewEnrichMongoRepository(mongoClient, config.MongoDBConfig.Database, config.MongoDBConfig.Collection)
 
 	repository.SetAuthRepository(authRepo)         // Setear la implementación global del AuthRepo
 	repository.SetEnrichmentRepository(enrichRepo) // Setear la implementación global del AuthRepo
