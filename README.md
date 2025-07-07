@@ -83,3 +83,15 @@ De lo contrario son parametros para un generador.
 Capa de composicion main.go
 Definir y ensamblar las dependencias.
 
+
+
+curl -X POST \
+    -H "Content-Type: application/json" \
+    -d @cloudtrail_sample.json \
+    -w "%{http_code}\n" \
+    http://localhost:9090/v1/enrichment/input | jq
+
+
+HAY UN ARCHIVO DE COPIA VALIDAR EL FALLO EN LAS FIRMAS DEL SERVICIO !!!!!
+
+services/enrichment_service.go.txt

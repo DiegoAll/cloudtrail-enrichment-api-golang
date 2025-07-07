@@ -36,15 +36,20 @@ func (ec *EnrichmentController) IngestData(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	var enrichedRecordsResponse []models.EnrichedEventRecord
-
-	//TODO
-	// CALL SERVICE EnrichEvent
+	// var enrichedRecordsResponse []models.EnrichedEventRecord
+	enrichedRecordsResponse, err := ec.service.EnrichEvent(r.Context(), &eventInput) // Pasa el contexto del request y el EventInput completo
+	if err != nil {
+		logger.ErrorLog.Printf("Error al enriquecer eventos: %v", err)
+		// Decide el código de estado adecuado. Podría ser 500 si es un error interno del servicio.
+		utils.ErrorJSON(w, fmt.Errorf("error al procesar y enriquecer eventos: %w", err), http.StatusInternalServerError)
+		return
+	}
 
 	payload := utils.JSONResponse{
 		Error:   false,
 		Message: fmt.Sprintf("%d registros procesados y enriquecidos exitosamente", len(enrichedRecordsResponse)),
 		Data:    []interface{}{}, // Devolvemos los records enriquecidos que se guardaron
+		// Data:    enrichedRecordsResponse,
 	}
 
 	if err := utils.WriteJSON(w, http.StatusCreated, payload); err != nil {

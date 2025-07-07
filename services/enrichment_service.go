@@ -12,8 +12,10 @@ import (
 )
 
 type EnrichmentService interface {
-	EnrichEvent(ctx context.Context, event *models.EnrichmentData) (models.EnrichedEventRecord, error)
-	// Top10QueryEvents(ctx context.Context, numEvents int) (*models.EnrichedEventRecord, error)
+	// Modificamos la firma de EnrichEvent:
+	// Ahora recibe *models.Event (la entrada completa de CloudTrail)
+	// y devuelve una slice de *models.EnrichedEventRecord (los registros procesados) y un error.
+	EnrichEvent(ctx context.Context, event *models.Event) ([]*models.EnrichedEventRecord, error)
 	Top10QueryEvents(ctx context.Context) ([]*models.EnrichedEventRecord, error)
 }
 
@@ -27,9 +29,10 @@ func NewDefaultEnrichmentService(repo repository.EnrichmentRepository) *DefaultE
 	}
 }
 
-func (s *DefaultEnrichmentService) EnrichEvent(ctx context.Context, event *models.Event) (any, error) {
-
-	var enrichedRecords []models.EnrichedEventRecord
+// Implementación de EnrichEvent para DefaultEnrichmentService
+// Coincide con la nueva firma de la interfaz.
+func (s *DefaultEnrichmentService) EnrichEvent(ctx context.Context, event *models.Event) ([]*models.EnrichedEventRecord, error) {
+	var enrichedRecords []*models.EnrichedEventRecord // Cambiamos a slice de punteros para consistencia y eficiencia
 
 	// Iterar sobre cada record en el evento de entrada
 	for i, record := range event.Records {
@@ -42,18 +45,23 @@ func (s *DefaultEnrichmentService) EnrichEvent(ctx context.Context, event *model
 
 		country, err := GetCountryFromIP(sourceIP)
 		if err != nil {
-			logger.ErrorLog.Printf("Error al obtener el país para la IP %s: %v", event.Records[0].SourceIPAddress, err)
-			return nil, fmt.Errorf("error al obtener el país: %w", err)
+			logger.ErrorLog.Printf("Error al obtener el país para la IP %s (registro %d): %v", sourceIP, i, err)
+			// Decide si quieres fallar todo el batch o solo saltar este registro.
+			// Por ahora, lo hacemos fallar para demostrar el error.
+			return nil, fmt.Errorf("error al obtener el país para el registro %d: %w", i, err)
 		}
-		logger.InfoLog.Printf("País obtenido para la IP %s: %s", event.Records[0].SourceIPAddress, country)
-		fmt.Println("Country:", country)
+		logger.InfoLog.Printf("País obtenido para la IP %s (registro %d): %s", sourceIP, i, country)
 
+		// Aquí puedes decidir si llamas a GetRegionFromCountry y GetSubregionFromRegion
+		// Es mejor tener una función auxiliar para obtener todo el enrichment de una IP
+		// para evitar llamadas repetidas a APIs y manejar errores de forma más granular.
+		// Por simplicidad, aquí solo obtenemos la región por ahora.
 		region, err := GetRegionFromCountry(country)
 		if err != nil {
-			logger.ErrorLog.Printf("Error al obtener la región para el país %s: %v", country, err)
-			return nil, fmt.Errorf("error al obtener la región: %w", err)
+			logger.ErrorLog.Printf("Error al obtener la región para el país %s (registro %d): %v", country, i, err)
+			return nil, fmt.Errorf("error al obtener la región para el registro %d: %w", i, err)
 		}
-		logger.InfoLog.Printf("País: %s, Región: %s", country, region)
+		logger.InfoLog.Printf("País: %s, Región: %s (registro %d)", country, region, i)
 
 		// Crear una nueva instancia de EnrichedEventRecord para la base de datos
 		enrichedRecord := models.EnrichedEventRecord{
@@ -70,22 +78,32 @@ func (s *DefaultEnrichmentService) EnrichEvent(ctx context.Context, event *model
 			Enrichment: models.EnrichmentData{ // Asignar la información de enriquecimiento
 				Country:   country,
 				Region:    region,
-				Subregion: record.Enrichment.Subregion, // Mantener la subregión si ya existe en la entrada
+				Subregion: "", // No se está obteniendo la subregión en este ejemplo.
 			},
 		}
 
 		if err := s.repo.InsertLog(ctx, &enrichedRecord); err != nil {
-			logger.ErrorLog.Printf("Error en el servicio al insertar evento enriquecido: %v", err)
-			return models.EnrichedEventRecord{}, fmt.Errorf("error al insertar evento enriquecido: %w", err)
+			logger.ErrorLog.Printf("Error en el servicio al insertar evento enriquecido (registro %d): %v", i, err)
+			return nil, fmt.Errorf("error al insertar evento enriquecido (registro %d): %w", i, err)
 		}
 
-		enrichedRecords = append(enrichedRecords, enrichedRecord)
+		enrichedRecords = append(enrichedRecords, &enrichedRecord) // Añadir puntero al slice
 
-		logger.InfoLog.Print("Evento enriquecido insertado exitosamente, event")
-
+		logger.InfoLog.Printf("Evento enriquecido insertado exitosamente (registro %d). SourceIP: %s", i, sourceIP)
 	}
 
-	return nil, nil
+	return enrichedRecords, nil // Devuelve los registros enriquecidos y nil error
+}
+
+type IPInfo struct {
+	Country string `json:"country"`
+	Status  string `json:"status"`
+	Message string `json:"message"` // Añadido para capturar mensajes de error de la API
+}
+
+type CountryInfo []struct {
+	Region    string `json:"region"`
+	Subregion string `json:"subregion"`
 }
 
 func (s *DefaultEnrichmentService) Top10QueryEvents(ctx context.Context) ([]*models.EnrichedEventRecord, error) {
@@ -102,33 +120,8 @@ func (s *DefaultEnrichmentService) Top10QueryEvents(ctx context.Context) ([]*mod
 	return nil, nil
 }
 
-type IPInfo struct {
-	Country string `json:"country"`
-	Status  string `json:"status"`
-	Message string `json:"message"` // Añadido para capturar mensajes de error de la API
-}
-
-type CountryInfo []struct {
-	Region    string `json:"region"`
-	Subregion string `json:"subregion"`
-}
-
-// Event Parser  from input handler
-func extractIPFromEvent(event string) string {
-
-	return ""
-}
-
-// 205.251.233.176
 // Retrieves the country of an IP address using the ip-api.com API.
 func GetCountryFromIP(ip string) (string, error) {
-
-	// request := fmt.Sprintf("https://pokeapi.co/api/v2/pokemon/%s", id)
-	// response, err := http.Get(request)
-	// if err != nil {
-	// 	return models.PokeApiPokemonResponse{}, err
-	// }
-
 	request := fmt.Sprintf("http://ip-api.com/json/%s", ip)
 
 	resp, err := http.Get(request)
@@ -166,7 +159,6 @@ func GetCountryFromIP(ip string) (string, error) {
 
 // Retrieves the geographical region of a country using the restcountries.com API.
 func GetRegionFromCountry(country string) (string, error) {
-
 	request := fmt.Sprintf("https://restcountries.com/v3.1/name/%s", country)
 	resp, err := http.Get(request)
 	if err != nil {

@@ -114,7 +114,9 @@ func main() {
 	// Inicialización de servicios
 	// PASAMOS jwtService al servicio de autenticación
 	authService := services.NewAuthService(repository.AuthRepo, jwtService) // CAMBIO IMPORTANTE AQUÍ
-	enrichService := services.NewEnrichmentService(repository.EnrichmentRepo)
+	// enrichService := services.NewDefaultEnrichmentService(repository.EnrichmentRepo)
+	enrichService := services.NewDefaultEnrichmentService(repository.EnrichmentRepo)
+
 	// Inicialización de controladores
 	authController := controllers.NewAuthController(authService)
 	systemController := controllers.NewSystemController()
