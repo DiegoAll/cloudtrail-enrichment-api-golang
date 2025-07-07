@@ -30,6 +30,7 @@
     "username": "user",
     "password": "password",
     "database": "mydatabase",
+    "collection": "enriched_events",
     "db_timeout": 10000000000
   },
   "auth_config": {

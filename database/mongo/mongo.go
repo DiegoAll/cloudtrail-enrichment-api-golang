@@ -89,6 +89,8 @@ func NewMongoClient(mongoURI string, timeout time.Duration) (*mongo.Client, erro
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 
+	logger.InfoLog.Printf("[DEBUG] URI de MongoDB final usada para la conexión: %s", mongoURI)
+
 	clientOptions := options.Client().ApplyURI(mongoURI)
 	client, err := mongo.Connect(ctx, clientOptions)
 	if err != nil {
@@ -122,6 +124,7 @@ type EnrichmentMongoRepository struct {
 // }
 
 func NewEnrichMongoRepository(client *mongo.Client, dbName, collectionName string) *EnrichmentMongoRepository {
+	logger.InfoLog.Printf("[DEBUG] Conectando a MongoDB. Base de datos: '%s', Colección: '%s'", dbName, collectionName)
 	collection := client.Database(dbName).Collection(collectionName)
 
 	return &EnrichmentMongoRepository{

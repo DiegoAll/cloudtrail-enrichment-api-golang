@@ -111,3 +111,6 @@ discriminar por
 tesis y relacioonados
 cursos
 portfolio
+
+
+El mensaje InvalidNamespace) Invalid namespace specified 'mydatabase.' proviene directamente del driver de MongoDB cuando intenta realizar una operación. Un "namespace" en MongoDB es la combinación de database.collection (ej., mydatabase.mycollection). El error explícitamente dice mydatabase., indicando que el problema está en el nombre de la base de datos.
