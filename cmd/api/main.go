@@ -27,9 +27,9 @@ type application struct {
 	// models     models.Models
 	middleware *middleware.Middleware
 	// productsController *controllers.ProductsController
-	authController   *controllers.AuthController
-	systemController *controllers.SystemController
-	//enrichmentController *controllers.EnrichmentController
+	authController       *controllers.AuthController
+	systemController     *controllers.SystemController
+	enrichmentController *controllers.EnrichmentController
 }
 
 func main() {
@@ -114,11 +114,11 @@ func main() {
 	// Inicialización de servicios
 	// PASAMOS jwtService al servicio de autenticación
 	authService := services.NewAuthService(repository.AuthRepo, jwtService) // CAMBIO IMPORTANTE AQUÍ
-
+	enrichService := services.NewEnrichmentService(repository.EnrichmentRepo)
 	// Inicialización de controladores
 	authController := controllers.NewAuthController(authService)
 	systemController := controllers.NewSystemController()
-	// enrichmentController := controllers.NewEnrichmentController(enrichService)
+	enrichmentController := controllers.NewEnrichmentController(enrichService)
 
 	// PASAMOS jwtService al middleware
 	mw := middleware.NewMiddleware(jwtService, authService) // CAMBIO IMPORTANTE AQUÍ
@@ -129,9 +129,9 @@ func main() {
 		errorLog:   logger.ErrorLog,
 		middleware: mw,
 		// productsController: productsController,
-		authController:   authController,
-		systemController: systemController,
-		// enrichmentController: enrichmentController,
+		authController:       authController,
+		systemController:     systemController,
+		enrichmentController: enrichmentController,
 	}
 
 	err = app.serve()

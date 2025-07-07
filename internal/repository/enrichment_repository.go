@@ -6,7 +6,7 @@ import (
 )
 
 type EnrichmentRepository interface {
-	InsertLog(ctx context.Context, trin *models.EnrichedEventRecord) error
+	InsertLog(ctx context.Context, event *models.EnrichedEventRecord) error
 	GetLatestLogs(ctx context.Context) ([]*models.EnrichedEventRecord, error)
 }
 

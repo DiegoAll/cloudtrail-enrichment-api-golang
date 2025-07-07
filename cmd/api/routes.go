@@ -26,22 +26,17 @@ func (app *application) routes() http.Handler {
 	mux.Route("/v1", func(r chi.Router) {
 		// Rutas públicas de la V1
 
-		r.Get("/health", app.systemController.HealthCheck) // Ruta de salud pública
-		// r.Get("/health", app.systemController.HealthCheck)
-		// r.Get("/public", app.authController.PublicRouteHandler) // Ejemplo de ruta pública
-		// r.Post("/register", app.authController.RegisterUser)
-		// r.Post("/authenticate", app.authController.AuthenticateUser)
+		r.Get("/health", app.systemController.HealthCheck)
+		r.Get("/public", app.authController.PublicRouteHandler)
+		r.Post("/register", app.authController.RegisterUser)
+		r.Post("/authenticate", app.authController.AuthenticateUser)
 
 		// Rutas protegidas por el middleware de autenticación de la V1
-		// r.Route("/products", func(r chi.Router) {
-		// r.Use(app.middleware.AuthTokenMiddleware)
-		// r.Use(app.middleware.AuthTokenMiddleware)
-		// r.Post("/", app.productsController.CreateProduct)
-		// r.Get("/", app.productsController.ListProducts)
-		// r.Get("/{uuid}", app.productsController.GetProductByUUID)
-		// r.Put("/{uuid}", app.productsController.UpdateProductByUUID)
-		// r.Delete("/{uuid}", app.productsController.DeleteProductByUUID)
-		// })
+		r.Route("/enrichment", func(r chi.Router) {
+			r.Use(app.middleware.AuthTokenMiddleware)
+			r.Post("/input", app.enrichmentController.IngestData)
+			r.Get("/get", app.enrichmentController.QueryEvents)
+		})
 
 		r.Route("/admin", func(r chi.Router) {
 			r.Use(app.middleware.AuthTokenMiddleware)

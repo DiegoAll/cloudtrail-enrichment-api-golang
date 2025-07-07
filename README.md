@@ -78,3 +78,8 @@ De lo contrario son parametros para un generador.
 			logger.ErrorLog.Printf("Error al cerrar la conexión a MongoDB: %v", err)
 		}
 	}()
+
+
+Capa de composicion main.go
+Definir y ensamblar las dependencias.
+
