@@ -3,13 +3,20 @@ Security monitoring REST API that performs IP geolocation enrichment based on AW
 
 
 
-# Scopes:
+UUID public API (mas seguro)
+Si tienes una arquitectura monolítica y no estás preocupado por seguridad a ese nivel.
+Pensar que siempre sera publica
+
+Token con id
+
+
+# Scopes management
 
     export SCOPE=local
     SCOPE=local go run cmd/api/main.go
 
 
-# Execute application
+# Run application
 
     docker-compose down -v --rmi all
     docker-compose up --build -d
@@ -23,7 +30,6 @@ Security monitoring REST API that performs IP geolocation enrichment based on AW
     docker build --tag rest_app .
 
 
-
 ## Secure Coding Practices
 
 > Disclaimer
@@ -35,6 +41,7 @@ Security monitoring REST API that performs IP geolocation enrichment based on AW
 - HTTP security headers, CORS
 - Strong cryptography 4 JWT, Hashing password etc
 - CSRF Token Header <> X-CSRF-Token
+- Authorization Role Based (Under construction)
 
 ## Secure Deployment Practices 
 
@@ -84,14 +91,22 @@ Capa de composicion main.go
 Definir y ensamblar las dependencias.
 
 
-
-curl -X POST \
-    -H "Content-Type: application/json" \
-    -d @cloudtrail_sample.json \
-    -w "%{http_code}\n" \
-    http://localhost:9090/v1/enrichment/input | jq
-
-
 HAY UN ARCHIVO DE COPIA VALIDAR EL FALLO EN LAS FIRMAS DEL SERVICIO !!!!!
 
 services/enrichment_service.go.txt
+
+makefile
+
+BACKUP en bash
+
+lea en el folder ultima version
+rm -rf db-data
+zip 
+
+
+Commando para obtener listado de vscode abierto y generar una nueva cpia
+
+discriminar por
+tesis y relacioonados
+cursos
+portfolio

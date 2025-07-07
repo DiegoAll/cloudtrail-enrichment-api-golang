@@ -3,17 +3,6 @@
 
 DROP TABLE IF EXISTS authdb;
 
-CREATE TABLE
-  public.products (
-    id serial NOT NULL,
-    --uuid character varying(255) UNIQUE NOT NULL, -- Agrega esta línea, idealmente INDEXADO
-    name character varying (255) NOT NULL,
-    description character varying (255) NOT NULL,
-    price numeric (10,2) NOT NULL,
-    created_at timestamp without time zone NOT NULL DEFAULT now(),
-    updated_at timestamp without time zone NOT NULL DEFAULT now()
-  );
-
 CREATE TABLE public.users (
     id serial NOT NULL,
     email character varying(128) NOT NULL UNIQUE,
@@ -23,7 +12,6 @@ CREATE TABLE public.users (
     created_at timestamp without time zone NOT NULL DEFAULT now(),
     updated_at timestamp without time zone NOT NULL DEFAULT now()
 );
-
 
 --FK PENDING: tokens_relation_1 trevor 60 CASCADE CASCADE
 CREATE TABLE public.tokens (
