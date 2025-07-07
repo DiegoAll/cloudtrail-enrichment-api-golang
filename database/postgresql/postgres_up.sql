@@ -21,18 +21,38 @@ CREATE TABLE public.users (
 
 --FK PENDING: tokens_relation_1 trevor 60 CASCADE CASCADE
 -- Crear la tabla 'tokens'
+
+-- token puede ser TEXT si no se sabe el tamaño del token.
+
 CREATE TABLE public.tokens (
     id serial NOT NULL PRIMARY KEY,
     user_id integer NOT NULL REFERENCES public.users(id) ON DELETE CASCADE, -- Asegúrate de que user_id sea NOT NULL
     email character varying(255) NOT NULL,
-    token character varying(255) NOT NULL UNIQUE, -- El token de texto plano puede ser único
-    token_hash bytea NOT NULL UNIQUE, -- El hash del token debería ser único
+    token character varying(512) NOT NULL, -- El token de texto plano puede ser único
+    token_hash bytea NOT NULL, -- El hash del token debería ser único
     expiry timestamp with time zone NOT NULL,
     -- Añadir la columna 'role' a la tabla de tokens si también se guarda allí
     role character varying(32) NOT NULL DEFAULT 'user',
     created_at timestamp without time zone NOT NULL DEFAULT now(), -- Usar now() para default
     updated_at timestamp without time zone NOT NULL DEFAULT now()  -- Usar now() para default
 );
+
+
+-- TREVOR
+--   CREATE TABLE
+--   public.tokens (
+--     id serial NOT NULL,
+--     user_id integer NULL,
+--     email character varying (255) NOT NULL,
+--     token character varying (255) NOT NULL,
+--     token_hash bytea NOT NULL,
+--     created_at timestamp without time zone NOT NULL DEFAULT now(),
+--     updated_at timestamp without time zone NOT NULL,
+--     expiry timestamp
+--     with
+--       time zone NOT NULL
+--   );
+
 
 
 INSERT INTO public.users (uuid, email, first_name, last_name, password_hash, role, created_at, updated_at) 
