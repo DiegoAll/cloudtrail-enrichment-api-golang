@@ -22,28 +22,12 @@ Quitar el semver
     curl -X POST \
         -H "Content-Type: application/json" \
         -d '{
-            "email": "diego@example.com",
-            "password": "123123123"
-            }' \
-        http://localhost:9090/v1/authenticate
-
-
-curl -X POST \
-        -H "Content-Type: application/json" \
-        -d '{
-            "email": "diego@diego.com",
-            "password": "123123123"
-            }' \
-        http://localhost:9090/v1/authenticate  NO DA MARAÑA TREVOR
-
-
-curl -X POST \
-        -H "Content-Type: application/json" \
-        -d '{
             "email": "usuario@example.com",
             "password": "123123123"
             }' \
         http://localhost:9090/v1/authenticate
+
+
 
 
 ## Enrichment (Input)
@@ -105,7 +89,7 @@ Tamaño del token frente a ataques.
 
 curl -X POST \
     -H "Content-Type: application/json" \
-    -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoyLCJlbWFpbCI6InVzdWFyaW9AZXhhbXBsZS5jb20iLCJ0b2tlbiI6IiIsInRva2VuX2hhc2giOiIiLCJleHBpcnkiOiIyMDI1LTA3LTA4VDE4OjE5OjE1Ljg2Mjc1ODE2OFoiLCJyb2xlIjoidXNlciIsImlzcyI6Imczbm90eXBlIiwic3ViIjoidXN1YXJpb0BleGFtcGxlLmNvbSIsImF1ZCI6WyJtaXMtdXN1YXJpb3MiXSwiZXhwIjoxNzUxOTk4NzU1LCJuYmYiOjE3NTE5MTIzNTUsImlhdCI6MTc1MTkxMjM1NSwiY3JlYXRlZF9hdCI6IjAwMDEtMDEtMDFUMDA6MDA6MDBaIiwidXBkYXRlZF9hdCI6IjAwMDEtMDEtMDFUMDA6MDA6MDBaIn0.drpjdYUtcq4lHxRSRq9WbWESb_mFWrSs0wKVvDAYvbk" \
+    -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoyLCJlbWFpbCI6InVzdWFyaW9AZXhhbXBsZS5jb20iLCJ0b2tlbiI6IiIsInRva2VuX2hhc2giOiIiLCJleHBpcnkiOiIyMDI1LTA3LTA4VDIxOjI2OjQyLjAxMTE5NjczM1oiLCJyb2xlIjoidXNlciIsImlzcyI6Imczbm90eXBlIiwic3ViIjoidXN1YXJpb0BleGFtcGxlLmNvbSIsImF1ZCI6WyJtaXMtdXN1YXJpb3MiXSwiZXhwIjoxNzUyMDEwMDAyLCJuYmYiOjE3NTE5MjM2MDIsImlhdCI6MTc1MTkyMzYwMiwiY3JlYXRlZF9hdCI6IjAwMDEtMDEtMDFUMDA6MDA6MDBaIiwidXBkYXRlZF9hdCI6IjAwMDEtMDEtMDFUMDA6MDA6MDBaIn0.BMGQdczYgrkljMOfi2nkUDa6iH0Cll9Sb0elRMo4nMQ" \
     -d @cloudtrail_sample.json \
     -w "\nHTTP Code: %{http_code}\n" \
     http://localhost:9090/v1/enrichment/input | jq
