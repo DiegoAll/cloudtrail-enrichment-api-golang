@@ -15,7 +15,6 @@ services:
       POSTGRES_PASSWORD: pass
       POSTGRES_INITDB_ARGS: "--auth-host=scram-sha-256"
     volumes:
-      # Docker creará la carpeta './db-data/postgres_data' en tu proyecto si no existe.
       # - ./db-data/postgres_data:/bitnami/postgresql/:rw
       - ./db-data/postgres:/var/lib/postgresql/data:rw
 
@@ -28,25 +27,13 @@ services:
     ports:
       - "27017:27017" 
     environment:
-      MONGO_INITDB_ROOT_USERNAME: user 
-      MONGO_INITDB_ROOT_PASSWORD: password 
-      MONGO_INITDB_DATABASE: mydatabase
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_USERNAME}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD}
+      MONGO_INITDB_DATABASE: ${MONGO_DATABASE}
     volumes:
-      # - apigo:/var/lib/postgresql/data #named volume
-      # *** CAMBIO AQUÍ: Ahora usamos un bind mount ***
-      # Se montará la carpeta './db-data/postgres' de tu host al '/var/lib/postgresql/data' del contenedor
-      # Docker creará la carpeta './db-data/postgres' en tu proyecto si no existe.
-
-
       # Bind mount para persistir los datos de MongoDB en tu host
       - ./db-data/mongo_data:/data/db:rw
 
-      # Puedes descomentar la siguiente línea SI NO ESTÁS USANDO el COPY init.sql en db/Dockerfile
-      # y quieres montar el init.sql desde una ubicación específica del host.
-      # Sin embargo, como tu db/Dockerfile ya lo copia, esta línea no es necesaria
-      # y causaría el error "not a directory" si se deja activa.
-      # - ./sql/init.sql:/docker-entrypoint-initdb.d/init.sql
-# ... dentro de service: db
   api:
     hostname: enrich_api
     build:
@@ -57,41 +44,27 @@ services:
       - "9090:9090"
     environment:
       PORT: 9090
-      # MONGO_URI: mongodb://user:password@enrich_api_db:27017/mydatabase?authSource=admin
-
-      MONGO_USERNAME: user             # <--- DESCOMENTAR (debe coincidir con MONGO_INITDB_ROOT_USERNAME)
-      MONGO_PORT: 27017                # <--- DESCOMENTAR
-
+      MONGO_PORT: 27017
       MONGO_HOST: enrich_api_db
-      MONGO_PASSWORD: password
-      MONGO_DATABASE: mydatabase
+      MONGO_DATABASE: ${MONGO_DATABASE}
       MONGO_COLLECTION: enriched_events
-      MONGO_DB_TIMEOUT: 10000000000
-
-      # DATABASE_URL: postgres://user:password@db:5432/mydatabase?sslmode=disable
-      # MONGO_DATABASE: mydatabase
-      DATABASE_HOST: auth_db # El hostname 'auth_db' debe coincidir con el 'hostname' del servicio db_postgres
+      MONGO_DB_TIMEOUT: ${MONGO_DB_TIMEOUT}
+      MONGO_USERNAME: ${MONGO_USERNAME}
+      MONGO_PASSWORD: ${MONGO_PASSWORD}
+      DATABASE_HOST: ${DATABASE_HOST}
       DATABASE_PORT: 5432
-      DATABASE_USERNAME: user
-      DATABASE_PASSWORD: pass
-      DATABASE_NAME: authdb
-      DATABASE_SSLMODE: disable # O 'require' si usas SSL
-      DB_TIMEOUT: 5000000000 # En nanosegundos (5 segundos)
+      DATABASE_USERNAME: ${DATABASE_USERNAME}
+      DATABASE_PASSWORD: ${DATABASE_PASSWORD}
+      DATABASE_NAME: ${DATABASE_NAME}
+      DATABASE_SSLMODE: disable
+      DB_TIMEOUT: 5000000000
       MAX_OPEN_CONNS: 100
 
-      JWT_SECRET: secret
-      JWT_PRIVATE_KEY: dsd
-      JWT_PUBLIC_KEY: dsd
-      HASH_COST: 10
-      TOKEN_DURATION: 86400000000000 # En nanosegundos para time.Duration
-
+      JWT_SECRET: ${JWT_SECRET}
+      TOKEN_DURATION: 86400000000000
+      # HASH_COST: 10
       SCOPE: prod
       # SCOPE: test
     depends_on:
       - db_mongo
       - db_postgres
-
-# *** CAMBIO AQUÍ: Eliminamos la sección de volúmenes nombrados ***
-# Ya no necesitamos definir 'pgdata' porque estamos usando un bind mount directo.
-# volumes:
-#   pgdata:

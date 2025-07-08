@@ -1,40 +1,23 @@
 # cloudtrail-enrichment-api-golang
+
 Security monitoring REST API that performs IP geolocation enrichment based on AWS CloudTrail logs.
 
+> Disclaimer
 
 
-UUID public API (mas seguro)
-Si tienes una arquitectura monolítica y no estás preocupado por seguridad a ese nivel.
-Pensar que siempre sera publica
-
-Token con id
-
-
-# Scopes management
-
-    export SCOPE=local
-    SCOPE=local go run cmd/api/main.go
-
-
-# Run application
+## Run application
 
     docker-compose down -v --rmi all
     docker-compose up --build -d
-
-    docker exec -it enrichment_api_db psql -U postgres -d booksdb
-    docker exec -it enrichment_api_db psql -U postgres -d booksdb -c "\dt"
-    docker exec -it enrichment_api_db psql -U postgres -d booksdb -c "SELECT * FROM users;"
-
-    docker exec -it enrichment_api_db psql -U postgres -d booksdb -c "SELECT * FROM tokens;"
-
-    docker build --tag rest_app .
 
 
 ## Secure Coding Practices
 
 > Disclaimer
 
-- JWT Based authentication using middleware (token type, custom claims)
+- JWT Based authentication using middleware:
+ (token type=HS256, custom claims=role, iss, sub,aud, exp,nbf,iat)
+- ✅ j.Config.AuthConfig.TokenDuration IMPORTANTE
 - Logs
 - Secrets Management
 - HTTPS Transport Cipher
@@ -45,6 +28,7 @@ Token con id
 
 ## Secure Deployment Practices 
 
+- docker-compose.yml remove environment variables (.env it's not neccesary)
 - Container security (Bitnami images, )
 - Kubernetes security (Security context, )
 
@@ -52,6 +36,19 @@ Token con id
 
 - TM
 - Auditory fields
+- Token Design:
+- Config (scaffold_config) ✅ Es ideal cuando no estás corriendo dentro de Docker. [Componente config para propagar las variables]
+- .env para Docker y produccion
+
+Parametros en texto plano, es mejor estandarizar y elegir uno.
+- Podria servir para emular un test unitario del componente config.
+- Redundante (escoger uno) config.go se presta para los dos.
+
+
+UUID public API (mas seguro)
+Si tienes una arquitectura monolítica y no estás preocupado por seguridad a ese nivel.
+Pensar que siempre sera publica
+Token con id
 
 
 ## Software Engineering
@@ -61,13 +58,7 @@ No es un  antipattern. Una separación clara de responsabilidades en la persiste
 ## Otros
 
 
-Tener una DB en la nube es super caro 
-
-GCLOUD TOMBAS CIBERSFISICAS CAGADAS COLOMBIA
-BUSCAR AWS
-
-HOMOLOGAR ESTRUCTURA CONNECTION STRING MONGO CON PG. (Global var)
-
+Tener una DB en la nube es super caro
 
 ALgunas variables no se pueden agregar de forma parametrica, si se puede hacer una sustitucion directa si.
 
@@ -115,3 +106,4 @@ portfolio
 
 El mensaje InvalidNamespace) Invalid namespace specified 'mydatabase.' proviene directamente del driver de MongoDB cuando intenta realizar una operación. Un "namespace" en MongoDB es la combinación de database.collection (ej., mydatabase.mycollection). El error explícitamente dice mydatabase., indicando que el problema está en el nombre de la base de datos.
 
+    docker build --tag rest_app .
