@@ -60,4 +60,31 @@ func (ec *EnrichmentController) IngestData(w http.ResponseWriter, r *http.Reques
 
 func (ec *EnrichmentController) QueryEvents(w http.ResponseWriter, r *http.Request) {
 
+	// Validar que el método sea GET
+	if r.Method != http.MethodGet {
+		logger.ErrorLog.Printf("Método no permitido: %s", r.Method)
+		utils.ErrorJSON(w, errors.New("método no permitido"), http.StatusMethodNotAllowed)
+		return
+	}
+
+	// Llamar al servicio para obtener los últimos 10 logs
+	records, err := ec.service.Top10QueryEvents(r.Context())
+	if err != nil {
+		logger.ErrorLog.Printf("Error en el controlador al consultar eventos: %v", err)
+		utils.ErrorJSON(w, fmt.Errorf("error al obtener los últimos 10 eventos: %w", err), http.StatusInternalServerError)
+		return
+	}
+
+	// Preparar la respuesta
+	payload := utils.JSONResponse{
+		Error:   false,
+		Message: fmt.Sprintf("Últimos %d eventos enriquecidos obtenidos exitosamente", len(records)),
+		Data:    records, // Devolver los registros obtenidos
+	}
+
+	// Escribir la respuesta JSON
+	if err := utils.WriteJSON(w, http.StatusOK, payload); err != nil {
+		logger.ErrorLog.Println("Error al escribir la respuesta JSON:", err)
+	}
+
 }

@@ -107,17 +107,14 @@ type CountryInfo []struct {
 }
 
 func (s *DefaultEnrichmentService) Top10QueryEvents(ctx context.Context) ([]*models.EnrichedEventRecord, error) {
-	// events, err := s.repo.GetLatestLogs(ctx)
-	// if err != nil {
-	// 	if err == sql.ErrNoRows {
-	// 		logger.InfoLog.Printf("Producto con UUID %s no encontrado en el servicio.")
-	// 		return nil, fmt.Errorf("producto no encontrado")
-	// 	}
-	// 	logger.ErrorLog.Printf("Error en el servicio al obtener producto por UUID")
-	// 	return nil, fmt.Errorf("error al obtener producto")
-	// }
-	// logger.InfoLog.Printf("Producto obtenido exitosamente con UUID")
-	return nil, nil
+
+	records, err := s.repo.GetLatestLogs(ctx)
+	if err != nil {
+		logger.ErrorLog.Printf("Error en el servicio al obtener los últimos 10 eventos: %v", err)
+		return nil, fmt.Errorf("error al obtener los últimos 10 eventos del repositorio: %w", err)
+	}
+	logger.InfoLog.Println("Servicio: Últimos 10 eventos obtenidos exitosamente.")
+	return records, nil
 }
 
 // Retrieves the country of an IP address using the ip-api.com API.
