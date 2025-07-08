@@ -4,6 +4,9 @@ Security monitoring REST API that performs IP geolocation enrichment based on AW
 
 > Disclaimer
 
+![Architecture](image.png)
+
+
 
 ## Run application
 
