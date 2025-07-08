@@ -3,7 +3,10 @@
 Security monitoring REST API that performs IP geolocation enrichment based on AWS CloudTrail logs.
 
 
-<img src="diagram.png" align="center"/>
+<p align="center">
+  <img src="diagram.png" width="500"/>
+</p>
+
 
 
 ## Run application

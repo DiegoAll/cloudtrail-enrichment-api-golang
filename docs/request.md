@@ -39,7 +39,7 @@ Quitar el semver
 
     curl -X POST \
         -H "Content-Type: application/json" \
-        -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoyLCJlbWFpbCI6InVzdWFyaW9AZXhhbXBsZS5jb20iLCJ0b2tlbiI6IiIsInRva2VuX2hhc2giOiIiLCJleHBpcnkiOiIyMDI1LTA3LTA5VDE3OjU4OjA1LjAxMDY4NjgxMVoiLCJyb2xlIjoidXNlciIsImlzcyI6Imczbm90eXBlIiwic3ViIjoidXN1YXJpb0BleGFtcGxlLmNvbSIsImF1ZCI6WyJtaXMtdXN1YXJpb3MiXSwiZXhwIjoxNzUyMDgzODg1LCJuYmYiOjE3NTE5OTc0ODUsImlhdCI6MTc1MTk5NzQ4NSwiY3JlYXRlZF9hdCI6IjAwMDEtMDEtMDFUMDA6MDA6MDBaIiwidXBkYXRlZF9hdCI6IjAwMDEtMDEtMDFUMDA6MDA6MDBaIn0.kzLoR4uIzgtGorZjwg3RmdHsc0YC7RtMYeS808NkyUg" \
+        -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoyLCJlbWFpbCI6InVzdWFyaW9AZXhhbXBsZS5jb20iLCJ0b2tlbiI6IiIsInRva2VuX2hhc2giOiIiLCJleHBpcnkiOiIyMDI1LTA3LTA5VDE4OjI3OjA3LjczMTAzNzI2OFoiLCJyb2xlIjoidXNlciIsImlzcyI6Imczbm90eXBlIiwic3ViIjoidXN1YXJpb0BleGFtcGxlLmNvbSIsImF1ZCI6WyJtaXMtdXN1YXJpb3MiXSwiZXhwIjoxNzUyMDg1NjI3LCJuYmYiOjE3NTE5OTkyMjcsImlhdCI6MTc1MTk5OTIyNywiY3JlYXRlZF9hdCI6IjAwMDEtMDEtMDFUMDA6MDA6MDBaIiwidXBkYXRlZF9hdCI6IjAwMDEtMDEtMDFUMDA6MDA6MDBaIn0.vEmht_x5sJJDdOgwAPV6-qD2J4V-ceLOBlz33Yy0e8I" \
         -d @cloudtrail_sample.json \
         -w "\nHTTP Code: %{http_code}\n" \
         http://localhost:9090/v1/enrichment | jq
@@ -53,7 +53,7 @@ Quitar el semver
 
     curl -X GET \
         -H "Content-Type: application/json" \
-        -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoyLCJlbWFpbCI6InVzdWFyaW9AZXhhbXBsZS5jb20iLCJ0b2tlbiI6IiIsInRva2VuX2hhc2giOiIiLCJleHBpcnkiOiIyMDI1LTA3LTA5VDE3OjU4OjA1LjAxMDY4NjgxMVoiLCJyb2xlIjoidXNlciIsImlzcyI6Imczbm90eXBlIiwic3ViIjoidXN1YXJpb0BleGFtcGxlLmNvbSIsImF1ZCI6WyJtaXMtdXN1YXJpb3MiXSwiZXhwIjoxNzUyMDgzODg1LCJuYmYiOjE3NTE5OTc0ODUsImlhdCI6MTc1MTk5NzQ4NSwiY3JlYXRlZF9hdCI6IjAwMDEtMDEtMDFUMDA6MDA6MDBaIiwidXBkYXRlZF9hdCI6IjAwMDEtMDEtMDFUMDA6MDA6MDBaIn0.kzLoR4uIzgtGorZjwg3RmdHsc0YC7RtMYeS808NkyUg" \
+        -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoyLCJlbWFpbCI6InVzdWFyaW9AZXhhbXBsZS5jb20iLCJ0b2tlbiI6IiIsInRva2VuX2hhc2giOiIiLCJleHBpcnkiOiIyMDI1LTA3LTA5VDE4OjI3OjA3LjczMTAzNzI2OFoiLCJyb2xlIjoidXNlciIsImlzcyI6Imczbm90eXBlIiwic3ViIjoidXN1YXJpb0BleGFtcGxlLmNvbSIsImF1ZCI6WyJtaXMtdXN1YXJpb3MiXSwiZXhwIjoxNzUyMDg1NjI3LCJuYmYiOjE3NTE5OTkyMjcsImlhdCI6MTc1MTk5OTIyNywiY3JlYXRlZF9hdCI6IjAwMDEtMDEtMDFUMDA6MDA6MDBaIiwidXBkYXRlZF9hdCI6IjAwMDEtMDEtMDFUMDA6MDA6MDBaIn0.vEmht_x5sJJDdOgwAPV6-qD2J4V-ceLOBlz33Yy0e8I" \
         -w "\nHTTP Code: %{http_code}\n" \
         http://localhost:9090/v1/enrichment | jq
 
