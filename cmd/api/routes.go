@@ -27,22 +27,21 @@ func (app *application) routes() http.Handler {
 		// Rutas públicas de la V1
 
 		r.Get("/health", app.systemController.HealthCheck)
-		r.Get("/public", app.authController.PublicRouteHandler)
-		r.Post("/register", app.authController.RegisterUser)
-		r.Post("/authenticate", app.authController.AuthenticateUser)
+		r.Post("/signup", app.authController.RegisterUser)
+		r.Post("/login", app.authController.AuthenticateUser)
 
 		// Rutas protegidas por el middleware de autenticación de la V1
 		r.Route("/enrichment", func(r chi.Router) {
 			r.Use(app.middleware.AuthTokenMiddleware)
-			r.Post("/input", app.enrichmentController.IngestData)
-			r.Get("/get", app.enrichmentController.QueryEvents)
+			r.Post("/", app.enrichmentController.IngestData)
+			r.Get("/", app.enrichmentController.QueryEvents)
 		})
 
-		r.Route("/admin", func(r chi.Router) {
-			r.Use(app.middleware.AuthTokenMiddleware)
-			// Puedes añadir middleware de autorización aquí si tienes roles
-			r.Get("/dashboard", app.AdminDashboard)
-		})
+		// r.Route("/admin", func(r chi.Router) {
+		// 	r.Use(app.middleware.AuthTokenMiddleware)
+		// 	// Authorization middleware with roles example
+		// 	r.Get("/dashboard", app.AdminDashboard)
+		// })
 	})
 
 	return mux
