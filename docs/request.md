@@ -6,24 +6,24 @@ Quitar el semver
 
     curl -X GET localhost:9090/v1/health
 
-## Register
+## Signup
 
     curl -X POST \
     -H "Content-Type: application/json" \
     -d '{
-        "email": "usuario@example.com",
-        "password": "123123123",
+        "email": "user@example.com",
+        "password": "secret",
         "role": "user"
     }' \
     http://localhost:9090/v1/signup
 
-## Authenticate
+## Login
 
     curl -X POST \
         -H "Content-Type: application/json" \
         -d '{
-            "email": "usuario@example.com",
-            "password": "123123123"
+            "email": "user@example.com",
+            "password": "secret"
             }' \
         http://localhost:9090/v1/login
 
@@ -39,7 +39,7 @@ Quitar el semver
 
     curl -X POST \
         -H "Content-Type: application/json" \
-        -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoyLCJlbWFpbCI6InVzdWFyaW9AZXhhbXBsZS5jb20iLCJ0b2tlbiI6IiIsInRva2VuX2hhc2giOiIiLCJleHBpcnkiOiIyMDI1LTA3LTA5VDE4OjI3OjA3LjczMTAzNzI2OFoiLCJyb2xlIjoidXNlciIsImlzcyI6Imczbm90eXBlIiwic3ViIjoidXN1YXJpb0BleGFtcGxlLmNvbSIsImF1ZCI6WyJtaXMtdXN1YXJpb3MiXSwiZXhwIjoxNzUyMDg1NjI3LCJuYmYiOjE3NTE5OTkyMjcsImlhdCI6MTc1MTk5OTIyNywiY3JlYXRlZF9hdCI6IjAwMDEtMDEtMDFUMDA6MDA6MDBaIiwidXBkYXRlZF9hdCI6IjAwMDEtMDEtMDFUMDA6MDA6MDBaIn0.vEmht_x5sJJDdOgwAPV6-qD2J4V-ceLOBlz33Yy0e8I" \
+        -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjozLCJlbWFpbCI6InVzZXJAZXhhbXBsZS5jb20iLCJ0b2tlbiI6IiIsInRva2VuX2hhc2giOiIiLCJleHBpcnkiOiIyMDI1LTA3LTEwVDA0OjE4OjQ4Ljg0OTUwMDg3N1oiLCJyb2xlIjoidXNlciIsImlzcyI6Imczbm90eXBlIiwic3ViIjoidXNlckBleGFtcGxlLmNvbSIsImF1ZCI6WyJtaXMtdXN1YXJpb3MiXSwiZXhwIjoxNzUyMTIxMTI4LCJuYmYiOjE3NTIwMzQ3MjgsImlhdCI6MTc1MjAzNDcyOCwiY3JlYXRlZF9hdCI6IjAwMDEtMDEtMDFUMDA6MDA6MDBaIiwidXBkYXRlZF9hdCI6IjAwMDEtMDEtMDFUMDA6MDA6MDBaIn0.VnLqVSRx4Qy_Dw43pRKPyhlFuWa5yKWZIrVv95WBrwo" \
         -d @cloudtrail_sample.json \
         -w "\nHTTP Code: %{http_code}\n" \
         http://localhost:9090/v1/enrichment | jq
@@ -53,7 +53,7 @@ Quitar el semver
 
     curl -X GET \
         -H "Content-Type: application/json" \
-        -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoyLCJlbWFpbCI6InVzdWFyaW9AZXhhbXBsZS5jb20iLCJ0b2tlbiI6IiIsInRva2VuX2hhc2giOiIiLCJleHBpcnkiOiIyMDI1LTA3LTA5VDE4OjI3OjA3LjczMTAzNzI2OFoiLCJyb2xlIjoidXNlciIsImlzcyI6Imczbm90eXBlIiwic3ViIjoidXN1YXJpb0BleGFtcGxlLmNvbSIsImF1ZCI6WyJtaXMtdXN1YXJpb3MiXSwiZXhwIjoxNzUyMDg1NjI3LCJuYmYiOjE3NTE5OTkyMjcsImlhdCI6MTc1MTk5OTIyNywiY3JlYXRlZF9hdCI6IjAwMDEtMDEtMDFUMDA6MDA6MDBaIiwidXBkYXRlZF9hdCI6IjAwMDEtMDEtMDFUMDA6MDA6MDBaIn0.vEmht_x5sJJDdOgwAPV6-qD2J4V-ceLOBlz33Yy0e8I" \
+        -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoyLCJlbWFpbCI6InVzdWFyaW9AZXhhbXBsZS5jb20iLCJ0b2tlbiI6IiIsInRva2VuX2hhc2giOiIiLCJleHBpcnkiOiIyMDI1LTA3LTA5VDIxOjI0OjQwLjg2MzU2MDAyOFoiLCJyb2xlIjoidXNlciIsImlzcyI6Imczbm90eXBlIiwic3ViIjoidXN1YXJpb0BleGFtcGxlLmNvbSIsImF1ZCI6WyJtaXMtdXN1YXJpb3MiXSwiZXhwIjoxNzUyMDk2MjgwLCJuYmYiOjE3NTIwMDk4ODAsImlhdCI6MTc1MjAwOTg4MCwiY3JlYXRlZF9hdCI6IjAwMDEtMDEtMDFUMDA6MDA6MDBaIiwidXBkYXRlZF9hdCI6IjAwMDEtMDEtMDFUMDA6MDA6MDBaIn0.y0ZmklIsF_8V07-oGvCp3SJTIM5GyudXXB6kUSNdry4" \
         -w "\nHTTP Code: %{http_code}\n" \
         http://localhost:9090/v1/enrichment | jq
 

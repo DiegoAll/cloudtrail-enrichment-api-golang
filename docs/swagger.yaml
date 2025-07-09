@@ -1,0 +1,501 @@
+openapi: 3.0.3
+info:
+  title: CloudTrail Enrichment API
+  description: Security monitoring REST API that performs IP geolocation enrichment based on AWS CloudTrail logs.
+  version: "1.0.0"
+
+servers:
+  - url: http://localhost:9090/v1
+
+paths:
+  /health:
+    get:
+      summary: Health Check
+      description: Verifies that the service is active and running.
+      responses:
+        '200':
+          description: OK. The service is active.
+          content:
+            application/json:
+              example:
+                status: "OK"
+
+  /signup:
+    post:
+      summary: User Signup
+      description: Registers a new user with an email and password for authentication.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email:
+                  type: string
+                  example: user@example.com
+                password:
+                  type: string
+                  example: secret
+            example:
+              email: user@example.com
+              password: secret
+      responses:
+        '201':
+          description: User registered successfully.
+          content:
+            application/json:
+              example:
+                error: false
+                message: "User registered successfully."
+                data: []
+        '400':
+          description: Invalid input data or user already exists.
+          content:
+            application/json:
+              example:
+                error: true
+                message: "Email already registered."
+                data: []
+
+  /login:
+    post:
+      summary: User Login
+      description: Authenticates a user by email and password, returning a JWT for accessing protected endpoints.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email:
+                  type: string
+                  example: user@example.com
+                password:
+                  type: string
+                  example: secret
+            example:
+              email: user@example.com
+              password: secret
+      responses:
+        '200':
+          description: Authentication successful.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token:
+                    type: string
+                    example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+                  email:
+                    type: string
+                    example: user@example.com
+                  expiry:
+                    type: string
+                    format: date-time
+                    example: "2025-07-09T21:24:40.863560028Z"
+              example:
+                error: false
+                message: "Authentication successful."
+                data:
+                  email: "user@example.com"
+                  expiry: "2025-07-09T21:24:40.863560028Z"
+                  token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...."
+        '401':
+          description: Invalid credentials.
+          content:
+            application/json:
+              example:
+                error: true
+                message: "Incorrect email or password."
+                data: []
+
+  /enrichment:
+    post:
+      summary: Ingest Logs
+      description: Ingests CloudTrail events and performs geolocation enrichment based on the source IP address.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [Records]
+              properties:
+                Records:
+                  type: array
+                  items:
+                    type: object
+                    # These are common required fields for a CloudTrail event, adjust if your specific events vary
+                    required:
+                      - eventVersion
+                      - userIdentity
+                      - eventTime
+                      - eventSource
+                      - eventName
+                      - awsRegion
+                      - sourceIPAddress
+                    properties:
+                      eventVersion:
+                        type: string
+                        description: The version of the CloudTrail event.
+                        example: "1.08"
+                      userIdentity:
+                        type: object
+                        description: Information about the identity that made the request.
+                        properties:
+                          type:
+                            type: string
+                            enum: [IAMUser, AssumedRole, Root, FederatedUser, AWSAccount, AWSService]
+                            example: IAMUser
+                          principalId:
+                            type: string
+                            example: EX_PRINCIPAL_ID
+                          arn:
+                            type: string
+                            example: arn:aws:iam::123456789012:user/Alice
+                          accountId:
+                            type: string
+                            example: "123456789012"
+                          accessKeyId:
+                            type: string
+                            example: EXAMPLE_KEY_ID
+                          userName:
+                            type: string
+                            example: Alice
+                          sessionContext:
+                            type: object
+                            properties:
+                              sessionIssuer:
+                                type: object
+                                properties:
+                                  type:
+                                    type: string
+                                  principalId:
+                                    type: string
+                                  arn:
+                                    type: string
+                                  accountId:
+                                    type: string
+                                  userName:
+                                    type: string
+                              webIdFederationData:
+                                type: object
+                                properties:
+                                  federatedProvider:
+                                    type: string
+                                  attributes:
+                                    type: object
+                                    additionalProperties:
+                                      type: string
+                              attributes:
+                                type: object
+                                properties:
+                                  mfaAuthenticated:
+                                    type: string
+                                    example: "false"
+                                  creationDate:
+                                    type: string
+                                    format: date-time
+                                    example: "2014-03-06T21:22:54Z"
+                      eventTime:
+                        type: string
+                        format: date-time
+                        description: The time when the event occurred in UTC.
+                        example: "2014-03-06T21:22:54Z"
+                      eventSource:
+                        type: string
+                        description: The source service of the event.
+                        example: ec2.amazonaws.com
+                      eventName:
+                        type: string
+                        description: The name of the API operation that was called.
+                        example: StartInstances
+                      awsRegion:
+                        type: string
+                        description: The AWS region where the event occurred.
+                        example: us-east-2
+                      sourceIPAddress:
+                        type: string
+                        format: ipv4
+                        description: The IP address from which the request originated.
+                        example: 205.251.233.176
+                      userAgent:
+                        type: string
+                        description: The agent that made the request.
+                        example: ec2-api-tools 1.6.12.2
+                      errorCode:
+                        type: string
+                        description: The error code for API calls that failed.
+                      errorMessage:
+                        type: string
+                        description: The error message for API calls that failed.
+                      requestParameters:
+                        type: object
+                        description: Parameters included in the request.
+                        # This part can be highly variable, defining a generic object for now.
+                        additionalProperties: true
+                        example:
+                          instancesSet:
+                            items:
+                              - instanceId: "i-ebeaf9e2"
+                      responseElements:
+                        type: object
+                        description: Elements included in the response.
+                        # This part can be highly variable, defining a generic object for now.
+                        additionalProperties: true
+                        example:
+                          instancesSet:
+                            items:
+                              - instanceId: "i-ebeaf9e2"
+                                currentState:
+                                  code: 0
+                                  name: "pending"
+                                previousState:
+                                  code: 80
+                                  name: "stopped"
+                      requestID:
+                        type: string
+                        description: The ID of the request.
+                        example: "c463698b-21d7-4632-a5e0-32b0a3994334"
+                      eventID:
+                        type: string
+                        description: The ID of the event.
+                        example: "a8097d34-d02f-410a-810a-3c723a1a45f9"
+                      readOnly:
+                        type: boolean
+                        description: Indicates if the event is a read-only operation.
+                        example: false
+                      eventType:
+                        type: string
+                        description: The type of event.
+                        example: "AwsApiCall"
+                      apiVersion:
+                        type: string
+                        description: The version of the API used for the call.
+                        example: "2016-11-15"
+                      recipientAccountId:
+                        type: string
+                        description: The AWS account ID that received the event.
+                        example: "123456789012"
+                      resources:
+                        type: array
+                        description: A list of resources involved in the event.
+                        items:
+                          type: object
+                          properties:
+                            accountId:
+                              type: string
+                            type:
+                              type: string
+                            ARN:
+                              type: string
+                      additionalEventData:
+                        type: object
+                        description: Additional information about the event.
+                        additionalProperties: true
+                      serviceEventDetails:
+                        type: object
+                        description: Details specific to the service that generated the event.
+                        additionalProperties: true
+                      sharedEventID:
+                        type: string
+                        description: The ID of the shared event, if applicable.
+                      vpcEndpointId:
+                        type: string
+                        description: The ID of the VPC endpoint through which the request was made.
+                      managementEvent:
+                        type: boolean
+                        description: Indicates if the event is a management event.
+                        example: true
+                      eventCategory:
+                        type: string
+                        description: The category of the event.
+                        example: "Management"
+
+            example:
+              Records:
+                - eventVersion: "1.0"
+                  userIdentity:
+                    type: "IAMUser"
+                    principalId: "EX_PRINCIPAL_ID"
+                    arn: "arn:aws:iam::123456789012:user/Alice"
+                    accessKeyId: "EXAMPLE_KEY_ID"
+                    accountId: "123456789012"
+                    userName: "Alice"
+                  eventTime: "2014-03-06T21:22:54Z"
+                  eventSource: "ec2.amazonaws.com"
+                  eventName: "StartInstances"
+                  awsRegion: "us-east-2"
+                  sourceIPAddress: "205.251.233.176"
+                  userAgent: "ec2-api-tools 1.6.12.2"
+                  requestParameters:
+                    instancesSet:
+                      items:
+                        - instanceId: "i-ebeaf9e2"
+                  responseElements:
+                    instancesSet:
+                      items:
+                        - instanceId: "i-ebeaf9e2"
+                          currentState:
+                            code: 0
+                            name: "pending"
+                          previousState:
+                            code: 80
+                            name: "stopped"
+      responses:
+        '201':
+          description: Record(s) processed and enriched successfully.
+          content:
+            application/json:
+              example:
+                error: false
+                message: "1 record(s) processed and enriched successfully."
+                data: []
+        '401':
+          description: Invalid or missing authentication token.
+          content:
+            application/json:
+              example:
+                error: true
+                message: "Invalid or missing token."
+                data: []
+        '400':
+          description: Invalid CloudTrail log format.
+          content:
+            application/json:
+              example:
+                error: true
+                message: "Invalid log format."
+                data: []
+
+    get:
+      summary: Get Enriched Logs
+      description: Returns the last 10 enriched CloudTrail events stored.
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: List of enriched events.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                          description: Unique identifier for the enriched event.
+                        eventVersion:
+                          type: string
+                        userIdentity:
+                          type: object
+                          properties:
+                            type:
+                              type: string
+                            principalId:
+                              type: string
+                            arn:
+                              type: string
+                            accessKeyId:
+                              type: string
+                            accountId:
+                              type: string
+                            userName:
+                              type: string
+                        eventTime:
+                          type: string
+                          format: date-time
+                        eventSource:
+                          type: string
+                        eventName:
+                          type: string
+                        awsRegion:
+                          type: string
+                        sourceIPAddress:
+                          type: string
+                        userAgent:
+                          type: string
+                        requestParameters:
+                          type: object
+                        responseElements:
+                          type: object
+                        enrichment:
+                          type: object
+                          properties:
+                            country:
+                              type: string
+                            region:
+                              type: string
+                            subregion:
+                              type: string
+              example:
+                error: false
+                message: "Last 10 enriched events retrieved successfully."
+                data:
+                  - id: "686d8d73c30cda2371c6d7f3"
+                    eventVersion: "1.0"
+                    userIdentity:
+                      type: "IAMUser"
+                      principalId: "EX_PRINCIPAL_ID"
+                      arn: "arn:aws:iam::123456789012:user/Alice"
+                      accessKeyId: "EXAMPLE_KEY_ID"
+                      accountId: "123456789012"
+                      userName: "Alice"
+                    eventTime: "2014-03-06T21:22:54Z"
+                    eventSource: "ec2.amazonaws.com"
+                    eventName: "StartInstances"
+                    awsRegion: "us-east-2"
+                    sourceIPAddress: "205.251.233.176"
+                    userAgent: "ec2-api-tools 1.6.12.2"
+                    requestParameters:
+                      instancesSet:
+                        items:
+                          - instanceId: "i-ebeaf9e2"
+                    responseElements:
+                      instancesSet:
+                        items:
+                          - instanceId: "i-ebeaf9e2"
+                            currentState:
+                              code: 0
+                              name: "pending"
+                            previousState:
+                              code: 80
+                              name: "stopped"
+                    enrichment:
+                      country: "United States"
+                      region: "Americas"
+                      subregion: ""
+        '401':
+          description: Invalid or missing authentication token.
+          content:
+            application/json:
+              example:
+                error: true
+                message: "Invalid or missing token."
+                data: []
+        '500':
+          description: Internal server error when retrieving logs.
+          content:
+            application/json:
+              example:
+                error: true
+                message: "Internal server error."
+                data: []
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
