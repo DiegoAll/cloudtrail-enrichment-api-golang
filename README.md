@@ -2,6 +2,9 @@
 
 Security monitoring REST API that performs IP geolocation enrichment based on AWS CloudTrail logs.
 
+Although it might seem like an anti-pattern, it is not in this context. There is a clear separation of concerns in data persistence. However, some potential failure risks may still exist. The architecture aims to leverage the strengths of MongoDB to store and process CloudTrail logs.
+
+
 <p align="center">
   <img src="diagram.png" width="500"/>
 </p>
@@ -53,7 +56,7 @@ Body:
 ```json
 {
   "email": "usuario@example.com",
-  "password": "123123123",
+  "password": "secret",
   "role": "user"
 }
 ```
@@ -80,7 +83,7 @@ Success Response:
     -H "Content-Type: application/json" \
     -d '{
         "email": "usuario@example.com",
-        "password": "123123123"
+        "password": "secret"
     }' \
     http://localhost:9090/v1/signup
 ```
@@ -101,7 +104,7 @@ Body:
 ```json
 {
   "email": "usuario@example.com",
-  "password": "123123123"
+  "password": "secret"
 }
 ```
 
@@ -131,7 +134,7 @@ curl -X POST \
     -H "Content-Type: application/json" \
     -d '{
         "email": "usuario@example.com",
-        "password": "123123123"
+        "password": "secret"
         }' \
     http://localhost:9090/v1/login
 ```
@@ -263,53 +266,39 @@ Success Response:
         )
 
 
-## Security by Design (Secure Design Principles)
+## Secure coding practices
 
-- TM
-- Auditory fields
-- Token Design:
-- Config (scaffold_config) ✅ Es ideal cuando no estás corriendo dentro de Docker. [Componente config para propagar las variables]
-- .env para Docker y produccion
+✅ Authentication and password management (JWT-based authentication middleware)
 
-Parametros en texto plano, es mejor estandarizar y elegir uno.
-- Podria servir para emular un test unitario del componente config.
-- Redundante (escoger uno) config.go se presta para los dos.
+✅ Input validation _(Under construction)_
 
+✅ Error Handling and Logging
 
-UUID public API (mas seguro)
-Si tienes una arquitectura monolítica y no estás preocupado por seguridad a ese nivel.
-Pensar que siempre sera publica
-Token con id
+✅ Cryptographic practices (JWT token implementation & design)
+
+✅ Communication security (SSL/TLS - CORS - security headers)
+
+✅ Database security _(Under construction)_
+
 
 ## Secure Deployment Practices 
 
-- docker-compose.yml remove environment variables (.env it's not neccesary)
-- Container security (Bitnami images, )
-- Kubernetes security (Security context, )
+✅  No hardcoded credentials in docker-compose.yml
+
+✅  Container security using Bitnami images  _(Under construction)_
+
+✅  
 
 
 
-HAY UN ARCHIVO DE COPIA VALIDAR EL FALLO EN LAS FIRMAS DEL SERVICIO !!!!!
+## References
 
-makefile
-
-BACKUP en bash
-
-lea en el folder ultima version
-rm -rf db-data
-zip 
+[OWASP Secure Coding Practices - Checklist](https://owasp.org/www-project-secure-coding-practices-quick-reference-guide/stable-en/02-checklist/05-checklist)
 
 
 
 
-> Disclaimer
 
-Aunque pueda parecer un antipatron, no lo es en este contexto. Hay una separación clara de responsabilidades en la persistencia de datos, sin embargo existen algunos riesgos. Hay una clara separación de responsabilidades. Aprovechar las ventajas de mongo para logs de cloudtrail.
-
-No es un  antipattern. Una separación clara de responsabilidades en la persistencia de datos, lo cual es una buena práctica de diseño. Se  aprovechan las fortalezas de PostgreSQL para datos relacionales y de MongoDB para datos de documentos.
-
-- Commando para obtener listado de vscode abierto y generar una nueva copia
-- discriminar por tesis y relacionados cursos portfolio
 
 
 

@@ -12,8 +12,7 @@ Quitar el semver
     -H "Content-Type: application/json" \
     -d '{
         "email": "user@example.com",
-        "password": "secret",
-        "role": "user"
+        "password": "secret"
     }' \
     http://localhost:9090/v1/signup
 
