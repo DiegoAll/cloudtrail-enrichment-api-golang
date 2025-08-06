@@ -1,0 +1,155 @@
+{
+	"info": {
+		"_postman_id": "YOUR_COLLECTION_ID",
+		"name": "CloudTrail Enrichment API",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "YOUR_EXPORTER_ID"
+	},
+	"item": [
+		{
+			"name": "Health Check",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:9090/v1/health",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "9090",
+					"path": [
+						"v1",
+						"health"
+					]
+				},
+				"description": "Verifies that the service is active and running."
+			},
+			"response": []
+		},
+		{
+			"name": "User Signup",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"email\": \"user@example.com\",\n  \"password\": \"secret\"\n}"
+				},
+				"url": {
+					"raw": "http://localhost:9090/v1/signup",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "9090",
+					"path": [
+						"v1",
+						"signup"
+					]
+				},
+				"description": "Registers a new user with an email and password for authentication."
+			},
+			"response": []
+		},
+		{
+			"name": "User Login",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"email\": \"user@example.com\",\n  \"password\": \"secret\"\n}"
+				},
+				"url": {
+					"raw": "http://localhost:9090/v1/login",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "9090",
+					"path": [
+						"v1",
+						"login"
+					]
+				},
+				"description": "Authenticates a user by email and password, returning a JWT for accessing protected endpoints."
+			},
+			"response": []
+		},
+		{
+			"name": "Ingest Logs",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "Authorization",
+						"value": "Bearer YOUR_JWT_TOKEN",
+						"type": "text",
+						"description": "JWT for authentication"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"Records\": [\n    {\n      \"eventVersion\": \"1.0\",\n      \"userIdentity\": {\n        \"type\": \"IAMUser\",\n        \"principalId\": \"EX_PRINCIPAL_ID\",\n        \"arn\": \"arn:aws:iam::123456789012:user/Alice\",\n        \"accessKeyId\": \"EXAMPLE_KEY_ID\",\n        \"accountId\": \"123456789012\",\n        \"userName\": \"Alice\"\n      },\n      \"eventTime\": \"2014-03-06T21:22:54Z\",\n      \"eventSource\": \"ec2.amazonaws.com\",\n      \"eventName\": \"StartInstances\",\n      \"awsRegion\": \"us-east-2\",\n      \"sourceIPAddress\": \"205.251.233.176\",\n      \"userAgent\": \"ec2-api-tools 1.6.12.2\",\n      \"requestParameters\": {\n        \"instancesSet\": {\n          \"items\": [\n            {\n              \"instanceId\": \"i-ebeaf9e2\"\n            }\n          ]\n        }\n      },\n      \"responseElements\": {\n        \"instancesSet\": {\n          \"items\": [\n            {\n              \"instanceId\": \"i-ebeaf9e2\",\n              \"currentState\": {\n                \"code\": 0,\n                \"name\": \"pending\"\n              },\n              \"previousState\": {\n                \"code\": 80,\n                \"name\": \"stopped\"\n              }\n            }\n          ]\n        }\n      }\n    }\n  ]\n}"
+				},
+				"url": {
+					"raw": "http://localhost:9090/v1/enrichment",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "9090",
+					"path": [
+						"v1",
+						"enrichment"
+					]
+				},
+				"description": "Ingests CloudTrail events and performs geolocation enrichment based on the source IP address."
+			},
+			"response": []
+		},
+		{
+			"name": "Get Enriched Logs",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer YOUR_JWT_TOKEN",
+						"type": "text",
+						"description": "JWT for authentication"
+					}
+				],
+				"url": {
+					"raw": "http://localhost:9090/v1/enrichment",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "9090",
+					"path": [
+						"v1",
+						"enrichment"
+					]
+				},
+				"description": "Returns the last 10 enriched CloudTrail events stored."
+			},
+			"response": []
+		}
+	]
+}
