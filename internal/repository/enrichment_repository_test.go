@@ -17,22 +17,17 @@ import (
 // Este archivo contiene las pruebas unitarias para EnrichmentMongoRepository.
 
 func TestMain(m *testing.M) {
-	// Inicializar el logger para evitar errores de puntero nulo en las pruebas.
-	// Esta es la única instancia de TestMain en el paquete repository_test.
 	logger.Init()
-	// Ejecutar las pruebas.
 	m.Run()
 }
 
 // TestEnrichmentMongoRepository_InsertLog prueba el método InsertLog.
 func TestEnrichmentMongoRepository_InsertLog(t *testing.T) {
 	mt := mtest.New(t, mtest.NewOptions().ClientType(mtest.Mock))
-	// CAMBIO: Se agrega el nombre de la prueba principal "insert_log"
-	defer mt.Run("insert_log", func(mt *mtest.T) {
+	defer mt.Run("insert_log_test", func(mt *mtest.T) {
 		repo := mongo.NewEnrichMongoRepository(mt.Client, "testdb", "enriched_events")
 		ctx := context.Background()
 
-		// Evento de prueba
 		eventToInsert := &models.EnrichedEventRecord{
 			EventVersion: "1.08",
 			EventSource:  "ec2.amazonaws.com",
@@ -43,6 +38,7 @@ func TestEnrichmentMongoRepository_InsertLog(t *testing.T) {
 
 		// --- Caso de éxito ---
 		mt.Run("success", func(mt *mtest.T) {
+			// Configura el mock solo para esta subprueba
 			mt.AddMockResponses(mtest.CreateSuccessResponse())
 			err := repo.InsertLog(ctx, eventToInsert)
 			if err != nil {
@@ -52,7 +48,7 @@ func TestEnrichmentMongoRepository_InsertLog(t *testing.T) {
 
 		// --- Caso de fallo en la inserción ---
 		mt.Run("failure_on_insert", func(mt *mtest.T) {
-			// Simular un error de la base de datos
+			// Configura el mock solo para esta subprueba
 			mt.AddMockResponses(mtest.CreateWriteErrorsResponse(mtest.WriteError{
 				Index:   0,
 				Code:    11000,
@@ -63,7 +59,6 @@ func TestEnrichmentMongoRepository_InsertLog(t *testing.T) {
 			if err == nil {
 				mt.Fatal("Se esperaba un error de inserción, pero se obtuvo nil")
 			}
-			// CAMBIO: Se corrigió la comparación del error, ya que errors.Is no funciona con mensajes de error creados a partir de un string
 			if err.Error() != "error al insertar evento enriquecido: error de clave duplicada simulado" {
 				mt.Fatalf("El error obtenido no coincide con el esperado.\nObtenido: %v\nEsperado: %v", err, errors.New("error al insertar evento enriquecido: error de clave duplicada simulado"))
 			}
@@ -74,12 +69,10 @@ func TestEnrichmentMongoRepository_InsertLog(t *testing.T) {
 // TestEnrichmentMongoRepository_GetLatestLogs prueba el método GetLatestLogs.
 func TestEnrichmentMongoRepository_GetLatestLogs(t *testing.T) {
 	mt := mtest.New(t, mtest.NewOptions().ClientType(mtest.Mock))
-	// CAMBIO: Se agrega el nombre de la prueba principal "get_latest_logs"
-	defer mt.Run("get_latest_logs", func(mt *mtest.T) {
+	defer mt.Run("get_latest_logs_test", func(mt *mtest.T) {
 		repo := mongo.NewEnrichMongoRepository(mt.Client, "testdb", "enriched_events")
 		ctx := context.Background()
 
-		// Datos de prueba para simular
 		events := []*models.EnrichedEventRecord{
 			{ID: primitive.NewObjectID(), EventName: "EventC", EventTime: time.Now().Add(time.Second * 3)},
 			{ID: primitive.NewObjectID(), EventName: "EventB", EventTime: time.Now().Add(time.Second * 2)},
@@ -88,6 +81,7 @@ func TestEnrichmentMongoRepository_GetLatestLogs(t *testing.T) {
 
 		// --- Caso de éxito ---
 		mt.Run("success", func(mt *mtest.T) {
+			// Configura el mock solo para esta subprueba
 			mt.AddMockResponses(mtest.CreateCursorResponse(1, "testdb.enriched_events", mtest.FirstBatch,
 				bson.D{
 					{Key: "_id", Value: events[0].ID},
@@ -122,6 +116,7 @@ func TestEnrichmentMongoRepository_GetLatestLogs(t *testing.T) {
 
 		// --- Caso de fallo en la búsqueda ---
 		mt.Run("failure_on_find", func(mt *mtest.T) {
+			// Configura el mock solo para esta subprueba
 			mt.AddMockResponses(bson.D{{Key: "ok", Value: 0}, {Key: "errmsg", Value: "error simulado de consulta"}})
 
 			retrievedEvents, err := repo.GetLatestLogs(ctx)
@@ -131,7 +126,6 @@ func TestEnrichmentMongoRepository_GetLatestLogs(t *testing.T) {
 			if retrievedEvents != nil {
 				mt.Fatal("Se esperaba una lista de eventos nula en caso de error")
 			}
-			// CAMBIO: Se corrigió la comparación del error
 			if err.Error() != "error al obtener los últimos eventos enriquecidos: error simulado de consulta" {
 				mt.Fatalf("El error obtenido no coincide con el esperado: %v", err)
 			}
@@ -139,7 +133,7 @@ func TestEnrichmentMongoRepository_GetLatestLogs(t *testing.T) {
 
 		// --- Caso de error en el cursor ---
 		mt.Run("failure_on_cursor", func(mt *mtest.T) {
-			// Simular un error después de la respuesta inicial
+			// Configura el mock solo para esta subprueba
 			mt.AddMockResponses(mtest.CreateCursorResponse(1, "testdb.enriched_events", mtest.FirstBatch,
 				bson.D{{Key: "eventName", Value: "EventA"}},
 			))
