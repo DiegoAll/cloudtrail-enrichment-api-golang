@@ -1,5 +1,3 @@
-// cmd/api/controllers/system_controller_test.go
-
 package controllers
 
 import (
@@ -20,6 +18,4 @@ func TestHealthCheck(t *testing.T) {
 	if rr.Code != http.StatusOK {
 		t.Errorf("Código de estado esperado %d, pero se obtuvo %d", http.StatusOK, rr.Code)
 	}
-
-	// Opcional: Podrías verificar que el cuerpo de la respuesta contiene "API está operativa"
 }

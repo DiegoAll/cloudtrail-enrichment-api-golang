@@ -1,9 +1,9 @@
-// cmd/api/controllers/auth_controller_test.go
-
 package controllers
 
 import (
 	"bytes"
+	"cloudtrail-enrichment-api-golang/internal/pkg/logger"
+	"cloudtrail-enrichment-api-golang/internal/pkg/token"
 	"cloudtrail-enrichment-api-golang/models"
 	"context"
 	"encoding/json"
@@ -12,6 +12,12 @@ import (
 	"net/http/httptest"
 	"testing"
 )
+
+// init es una función especial de Go que se ejecuta antes de los tests.
+// La usamos para asegurarnos de que el logger esté inicializado.
+func init() {
+	logger.Init()
+}
 
 // TestRegisterUser_Success prueba el registro exitoso de un usuario.
 func TestRegisterUser_Success(t *testing.T) {
@@ -24,7 +30,6 @@ func TestRegisterUser_Success(t *testing.T) {
 			}, nil
 		},
 	}
-
 	controller := NewAuthController(mockService)
 
 	payload := models.RegisterPayload{
@@ -41,8 +46,6 @@ func TestRegisterUser_Success(t *testing.T) {
 	if rr.Code != http.StatusCreated {
 		t.Errorf("Código de estado esperado %d, pero se obtuvo %d", http.StatusCreated, rr.Code)
 	}
-
-	// Opcional: Podrías decodificar la respuesta y verificar el contenido
 }
 
 // TestRegisterUser_InvalidPayload prueba un payload de registro inválido.
@@ -63,13 +66,12 @@ func TestRegisterUser_InvalidPayload(t *testing.T) {
 // TestAuthenticateUser_Success prueba la autenticación exitosa.
 func TestAuthenticateUser_Success(t *testing.T) {
 	mockService := &MockAuthService{
-		AuthenticateUserFunc: func(ctx context.Context, email, password string) (*models.User, *models.JWTToken, error) {
+		AuthenticateUserFunc: func(ctx context.Context, email, password string) (*models.User, *token.JWTToken, error) {
 			user := &models.User{UUID: "test-uuid", Email: email, Role: "user"}
-			token := &models.JWTToken{Token: "test.token", Expiry: "24h"}
-			return user, token, nil
+			jwtToken := &token.JWTToken{Token: "test.token"}
+			return user, jwtToken, nil
 		},
 	}
-
 	controller := NewAuthController(mockService)
 
 	payload := models.LoginPayload{
@@ -90,11 +92,10 @@ func TestAuthenticateUser_Success(t *testing.T) {
 // TestAuthenticateUser_Failure prueba una autenticación fallida.
 func TestAuthenticateUser_Failure(t *testing.T) {
 	mockService := &MockAuthService{
-		AuthenticateUserFunc: func(ctx context.Context, email, password string) (*models.User, *models.JWTToken, error) {
+		AuthenticateUserFunc: func(ctx context.Context, email, password string) (*models.User, *token.JWTToken, error) {
 			return nil, nil, errors.New("credenciales inválidas")
 		},
 	}
-
 	controller := NewAuthController(mockService)
 
 	payload := models.LoginPayload{
