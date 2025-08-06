@@ -39,9 +39,9 @@ func TestRegisterUser_Success(t *testing.T) {
 	}
 	body, _ := json.Marshal(payload)
 	req := httptest.NewRequest("POST", "/signup", bytes.NewReader(body))
+	// Capture the controller's response.
 	rr := httptest.NewRecorder()
 
-	// Capture the controller's response.
 	controller.RegisterUser(rr, req)
 
 	if rr.Code != http.StatusCreated {

@@ -84,7 +84,7 @@ func TestQueryEvents_Success(t *testing.T) {
 	}
 }
 
-// TestQueryEvents_ServiceError prueba un error en el servicio al consultar eventos.
+// TestQueryEvents_ServiceError Tests an error in the service when querying events.
 func TestQueryEvents_ServiceError(t *testing.T) {
 	mockService := &MockEnrichmentService{
 		Top10QueryEventsFunc: func(ctx context.Context) ([]*models.EnrichedEventRecord, error) {
