@@ -6,7 +6,7 @@ import (
 	"testing"
 )
 
-// TestHealthCheck prueba que el health check retorna un estado OK.
+// TestHealthCheck Tests that the health check returns an OK status.
 func TestHealthCheck(t *testing.T) {
 	controller := NewSystemController()
 

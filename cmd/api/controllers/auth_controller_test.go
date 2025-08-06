@@ -13,13 +13,13 @@ import (
 	"testing"
 )
 
-// init es una función especial de Go que se ejecuta antes de los tests.
-// La usamos para asegurarnos de que el logger esté inicializado.
+// The logger must be initialized in order to run the application.
+// Avoid  (invalid memory address or nil pointer dereference)
 func init() {
 	logger.Init()
 }
 
-// TestRegisterUser_Success prueba el registro exitoso de un usuario.
+// Tests the successful registration of a user.
 func TestRegisterUser_Success(t *testing.T) {
 	mockService := &MockAuthService{
 		RegisterUserFunc: func(ctx context.Context, payload *models.RegisterPayload) (*models.User, error) {
@@ -41,6 +41,7 @@ func TestRegisterUser_Success(t *testing.T) {
 	req := httptest.NewRequest("POST", "/signup", bytes.NewReader(body))
 	rr := httptest.NewRecorder()
 
+	// Capture the controller's response.
 	controller.RegisterUser(rr, req)
 
 	if rr.Code != http.StatusCreated {
@@ -48,7 +49,7 @@ func TestRegisterUser_Success(t *testing.T) {
 	}
 }
 
-// TestRegisterUser_InvalidPayload prueba un payload de registro inválido.
+// TestRegisterUser_InvalidPayload Tests an invalid registration payload.
 func TestRegisterUser_InvalidPayload(t *testing.T) {
 	mockService := &MockAuthService{}
 	controller := NewAuthController(mockService)
@@ -63,7 +64,7 @@ func TestRegisterUser_InvalidPayload(t *testing.T) {
 	}
 }
 
-// TestAuthenticateUser_Success prueba la autenticación exitosa.
+// TestAuthenticateUser_Success Tests successful authentication.
 func TestAuthenticateUser_Success(t *testing.T) {
 	mockService := &MockAuthService{
 		AuthenticateUserFunc: func(ctx context.Context, email, password string) (*models.User, *token.JWTToken, error) {
@@ -89,7 +90,7 @@ func TestAuthenticateUser_Success(t *testing.T) {
 	}
 }
 
-// TestAuthenticateUser_Failure prueba una autenticación fallida.
+// TestAuthenticateUser_Failure Tests a failed authentication.
 func TestAuthenticateUser_Failure(t *testing.T) {
 	mockService := &MockAuthService{
 		AuthenticateUserFunc: func(ctx context.Context, email, password string) (*models.User, *token.JWTToken, error) {

@@ -14,7 +14,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-// TestIngestData_Success prueba la ingesta de datos exitosa.
+// TestIngestData_Success Tests successful data ingestion.
 func TestIngestData_Success(t *testing.T) {
 	mockService := &MockEnrichmentService{
 		EnrichEventFunc: func(ctx context.Context, event *models.Event) ([]*models.EnrichedEventRecord, error) {
@@ -23,8 +23,7 @@ func TestIngestData_Success(t *testing.T) {
 	}
 	controller := NewEnrichmentController(mockService)
 
-	// CORRECCIÓN: Se añaden las etiquetas JSON a la definición del struct anónimo
-	// para que coincida con el tipo definido en models/enrichment.go.
+	// JSON tags are added to the anonymous struct definition to match the type defined in models/enrichment.go
 	payload := models.Event{
 		Records: []struct {
 			EventVersion      string                   `json:"eventVersion"`
@@ -51,7 +50,7 @@ func TestIngestData_Success(t *testing.T) {
 	}
 }
 
-// TestIngestData_InvalidPayload prueba un payload de ingesta de datos inválido.
+// TestIngestData_InvalidPayload Tests an invalid data ingestion payload.
 func TestIngestData_InvalidPayload(t *testing.T) {
 	mockService := &MockEnrichmentService{}
 	controller := NewEnrichmentController(mockService)
@@ -66,7 +65,7 @@ func TestIngestData_InvalidPayload(t *testing.T) {
 	}
 }
 
-// TestQueryEvents_Success prueba la consulta de eventos exitosa.
+// TestQueryEvents_Success Tests a successful event query.
 func TestQueryEvents_Success(t *testing.T) {
 	mockService := &MockEnrichmentService{
 		Top10QueryEventsFunc: func(ctx context.Context) ([]*models.EnrichedEventRecord, error) {
