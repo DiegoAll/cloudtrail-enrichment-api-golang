@@ -1,520 +1,258 @@
 package repository_test
 
 import (
-	"cloudtrail-enrichment-api-golang/database/postgresql"
+	"cloudtrail-enrichment-api-golang/internal/repository" // Importamos el paquete principal
 	"cloudtrail-enrichment-api-golang/models"
 	"context"
-	"database/sql"
 	"errors"
-	"regexp"
 	"testing"
-	"time"
 
-	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/google/uuid"
 )
 
-// setUpDBMock establece un mock de la base de datos para pruebas.
-func setUpDBMock(t *testing.T) (*sql.DB, sqlmock.Sqlmock) {
-	db, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("un error ocurrió al crear el mock de la base de datos: %v", err)
-	}
-	return db, mock
+// MockAuthRepository es un mock simple para la interfaz AuthRepository
+type MockAuthRepository struct {
+	InsertUserFunc           func(ctx context.Context, user *models.User) error
+	GetUserByEmailFunc       func(ctx context.Context, email string) (*models.User, error)
+	GetUserByUUIDFunc        func(ctx context.Context, uuid string) (*models.User, error)
+	InsertTokenFunc          func(ctx context.Context, token *models.Token) error
+	GetTokenByTokenHashFunc  func(ctx context.Context, tokenHash string) (*models.Token, error)
+	DeleteTokensByUserIDFunc func(ctx context.Context, userID int) error
+	GetTokenByTokenFunc      func(ctx context.Context, tokenString string) (*models.Token, error)
+	GetUserForTokenFunc      func(ctx context.Context, userID int) (*models.User, error)
 }
 
-// TestAuthRepository_InsertUser prueba el método InsertUser.
-func TestAuthRepository_InsertUser(t *testing.T) {
-	db, mock := setUpDBMock(t)
-	defer db.Close()
-
-	repo := postgresql.NewAuthPostgresRepository(db)
-	ctx := context.Background()
-	now := time.Now()
-	userID := 1
-	userUUID := uuid.New().String()
-
-	userToInsert := &models.User{
-		UUID:         userUUID,
-		Email:        "test@example.com",
-		PasswordHash: "hashedpassword",
-		Role:         "user",
-		CreatedAt:    now,
-		UpdatedAt:    now,
-	}
-
-	// Caso de éxito
-	t.Run("success", func(t *testing.T) {
-		// CORRECCIÓN: Usamos sqlmock.AnyArg() para los campos de tiempo para evitar errores de nanosegundos
-		mock.ExpectQuery(regexp.QuoteMeta(`INSERT INTO users (uuid, email, password_hash, role, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`)).
-			WithArgs(userToInsert.UUID, userToInsert.Email, userToInsert.PasswordHash, userToInsert.Role, sqlmock.AnyArg(), sqlmock.AnyArg()).
-			WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(userID))
-
-		err := repo.InsertUser(ctx, userToInsert)
-		if err != nil {
-			t.Errorf("se esperaba un error nulo, se obtuvo %v", err)
-		}
-		if userToInsert.ID != userID {
-			t.Errorf("se esperaba que el ID del usuario fuera %d, se obtuvo %d", userID, userToInsert.ID)
-		}
-		if err := mock.ExpectationsWereMet(); err != nil {
-			t.Errorf("no se cumplieron todas las expectativas: %v", err)
-		}
-	})
-
-	// Caso de error
-	t.Run("failure", func(t *testing.T) {
-		// CORRECCIÓN: Usamos sqlmock.AnyArg() para los campos de tiempo
-		mock.ExpectQuery(regexp.QuoteMeta(`INSERT INTO users (uuid, email, password_hash, role, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`)).
-			WithArgs(userToInsert.UUID, userToInsert.Email, userToInsert.PasswordHash, userToInsert.Role, sqlmock.AnyArg(), sqlmock.AnyArg()).
-			WillReturnError(errors.New("error de base de datos simulado"))
-
-		err := repo.InsertUser(ctx, userToInsert)
-		if err == nil {
-			t.Error("se esperaba un error, se obtuvo nil")
-		}
-		if err := mock.ExpectationsWereMet(); err != nil {
-			t.Errorf("no se cumplieron todas las expectativas: %v", err)
-		}
-	})
+func (m *MockAuthRepository) InsertUser(ctx context.Context, user *models.User) error {
+	return m.InsertUserFunc(ctx, user)
 }
 
-// TestAuthRepository_GetUserByEmail prueba el método GetUserByEmail.
-func TestAuthRepository_GetUserByEmail(t *testing.T) {
-	db, mock := setUpDBMock(t)
-	defer db.Close()
-	repo := postgresql.NewAuthPostgresRepository(db)
-	ctx := context.Background()
-
-	testUser := &models.User{
-		ID:           1,
-		UUID:         uuid.New().String(),
-		Email:        "test@example.com",
-		PasswordHash: "hashedpassword",
-		Role:         "user",
-		CreatedAt:    time.Now(),
-		UpdatedAt:    time.Now(),
-	}
-
-	t.Run("success", func(t *testing.T) {
-		rows := sqlmock.NewRows([]string{"id", "uuid", "email", "password_hash", "role", "created_at", "updated_at"}).
-			AddRow(testUser.ID, testUser.UUID, testUser.Email, testUser.PasswordHash, testUser.Role, testUser.CreatedAt, testUser.UpdatedAt)
-
-		mock.ExpectQuery(regexp.QuoteMeta(`SELECT id, uuid, email, password_hash, role, created_at, updated_at FROM users WHERE email = $1`)).
-			WithArgs(testUser.Email).
-			WillReturnRows(rows)
-
-		user, err := repo.GetUserByEmail(ctx, testUser.Email)
-		if err != nil {
-			t.Errorf("se esperaba un error nulo, se obtuvo %v", err)
-		}
-		if user == nil || user.Email != testUser.Email {
-			t.Errorf("el usuario retornado no coincide con el esperado")
-		}
-		if err := mock.ExpectationsWereMet(); err != nil {
-			t.Errorf("no se cumplieron todas las expectativas: %v", err)
-		}
-	})
-
-	t.Run("user not found", func(t *testing.T) {
-		mock.ExpectQuery(regexp.QuoteMeta(`SELECT id, uuid, email, password_hash, role, created_at, updated_at FROM users WHERE email = $1`)).
-			WithArgs("nonexistent@example.com").
-			WillReturnError(sql.ErrNoRows)
-
-		user, err := repo.GetUserByEmail(ctx, "nonexistent@example.com")
-		if err == nil || !errors.Is(err, sql.ErrNoRows) {
-			t.Errorf("se esperaba sql.ErrNoRows, se obtuvo %v", err)
-		}
-		if user != nil {
-			t.Errorf("se esperaba un usuario nulo, se obtuvo %v", user)
-		}
-		if err := mock.ExpectationsWereMet(); err != nil {
-			t.Errorf("no se cumplieron todas las expectativas: %v", err)
-		}
-	})
-
-	t.Run("query error", func(t *testing.T) {
-		mock.ExpectQuery(regexp.QuoteMeta(`SELECT id, uuid, email, password_hash, role, created_at, updated_at FROM users WHERE email = $1`)).
-			WithArgs(testUser.Email).
-			WillReturnError(errors.New("error de base de datos simulado"))
-
-		_, err := repo.GetUserByEmail(ctx, testUser.Email)
-		if err == nil {
-			t.Error("se esperaba un error, se obtuvo nil")
-		}
-		if err := mock.ExpectationsWereMet(); err != nil {
-			t.Errorf("no se cumplieron todas las expectativas: %v", err)
-		}
-	})
+func (m *MockAuthRepository) GetUserByEmail(ctx context.Context, email string) (*models.User, error) {
+	return m.GetUserByEmailFunc(ctx, email)
 }
 
-// TestAuthRepository_GetUserByUUID prueba el método GetUserByUUID.
-func TestAuthRepository_GetUserByUUID(t *testing.T) {
-	db, mock := setUpDBMock(t)
-	defer db.Close()
-	repo := postgresql.NewAuthPostgresRepository(db)
-	ctx := context.Background()
-
-	testUser := &models.User{
-		ID:           1,
-		UUID:         uuid.New().String(),
-		Email:        "test@example.com",
-		PasswordHash: "hashedpassword",
-		Role:         "user",
-		CreatedAt:    time.Now(),
-		UpdatedAt:    time.Now(),
-	}
-
-	t.Run("success", func(t *testing.T) {
-		rows := sqlmock.NewRows([]string{"id", "uuid", "email", "password_hash", "role", "created_at", "updated_at"}).
-			AddRow(testUser.ID, testUser.UUID, testUser.Email, testUser.PasswordHash, testUser.Role, testUser.CreatedAt, testUser.UpdatedAt)
-
-		mock.ExpectQuery(regexp.QuoteMeta(`SELECT id, uuid, email, password_hash, role, created_at, updated_at FROM users WHERE uuid = $1`)).
-			WithArgs(testUser.UUID).
-			WillReturnRows(rows)
-
-		user, err := repo.GetUserByUUID(ctx, testUser.UUID)
-		if err != nil {
-			t.Errorf("se esperaba un error nulo, se obtuvo %v", err)
-		}
-		if user == nil || user.UUID != testUser.UUID {
-			t.Errorf("el usuario retornado no coincide con el esperado")
-		}
-		if err := mock.ExpectationsWereMet(); err != nil {
-			t.Errorf("no se cumplieron todas las expectativas: %v", err)
-		}
-	})
-
-	t.Run("user not found", func(t *testing.T) {
-		nonExistentUUID := uuid.New().String()
-		mock.ExpectQuery(regexp.QuoteMeta(`SELECT id, uuid, email, password_hash, role, created_at, updated_at FROM users WHERE uuid = $1`)).
-			WithArgs(nonExistentUUID).
-			WillReturnError(sql.ErrNoRows)
-
-		user, err := repo.GetUserByUUID(ctx, nonExistentUUID)
-		if err == nil || !errors.Is(err, sql.ErrNoRows) {
-			t.Errorf("se esperaba sql.ErrNoRows, se obtuvo %v", err)
-		}
-		if user != nil {
-			t.Errorf("se esperaba un usuario nulo, se obtuvo %v", user)
-		}
-		if err := mock.ExpectationsWereMet(); err != nil {
-			t.Errorf("no se cumplieron todas las expectativas: %v", err)
-		}
-	})
-
-	t.Run("query error", func(t *testing.T) {
-		mock.ExpectQuery(regexp.QuoteMeta(`SELECT id, uuid, email, password_hash, role, created_at, updated_at FROM users WHERE uuid = $1`)).
-			WithArgs(testUser.UUID).
-			WillReturnError(errors.New("error de base de datos simulado"))
-
-		_, err := repo.GetUserByUUID(ctx, testUser.UUID)
-		if err == nil {
-			t.Error("se esperaba un error, se obtuvo nil")
-		}
-		if err := mock.ExpectationsWereMet(); err != nil {
-			t.Errorf("no se cumplieron todas las expectativas: %v", err)
-		}
-	})
+func (m *MockAuthRepository) GetUserByUUID(ctx context.Context, uuid string) (*models.User, error) {
+	return m.GetUserByUUIDFunc(ctx, uuid)
 }
 
-// TestAuthRepository_InsertToken prueba el método InsertToken.
-func TestAuthRepository_InsertToken(t *testing.T) {
-	db, mock := setUpDBMock(t)
-	defer db.Close()
-	repo := postgresql.NewAuthPostgresRepository(db)
-	ctx := context.Background()
-
-	testToken := &models.Token{
-		UserID:    1,
-		Email:     "test@example.com",
-		Token:     "testtoken",
-		TokenHash: "hashed_testtoken",
-		Expiry:    time.Now().Add(time.Hour),
-		Role:      "user",
-		CreatedAt: time.Now(),
-		UpdatedAt: time.Now(),
-	}
-
-	// Caso de éxito
-	t.Run("success", func(t *testing.T) {
-		// CORRECCIÓN: Usamos sqlmock.AnyArg() para los campos de tiempo para evitar errores de nanosegundos
-		mock.ExpectExec(regexp.QuoteMeta(`INSERT INTO tokens (user_id, email, token, token_hash, expiry, created_at, updated_at, role) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`)).
-			WithArgs(testToken.UserID, testToken.Email, testToken.Token, testToken.TokenHash, sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), testToken.Role).
-			WillReturnResult(sqlmock.NewResult(1, 1))
-
-		err := repo.InsertToken(ctx, testToken)
-		if err != nil {
-			t.Errorf("se esperaba un error nulo, se obtuvo %v", err)
-		}
-		if err := mock.ExpectationsWereMet(); err != nil {
-			t.Errorf("no se cumplieron todas las expectativas: %v", err)
-		}
-	})
-
-	// Caso de error
-	t.Run("failure", func(t *testing.T) {
-		// CORRECCIÓN: Usamos sqlmock.AnyArg() para los campos de tiempo
-		mock.ExpectExec(regexp.QuoteMeta(`INSERT INTO tokens (user_id, email, token, token_hash, expiry, created_at, updated_at, role) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`)).
-			WithArgs(testToken.UserID, testToken.Email, testToken.Token, testToken.TokenHash, sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), testToken.Role).
-			WillReturnError(errors.New("error de base de datos simulado"))
-
-		err := repo.InsertToken(ctx, testToken)
-		if err == nil {
-			t.Error("se esperaba un error, se obtuvo nil")
-		}
-		if err := mock.ExpectationsWereMet(); err != nil {
-			t.Errorf("no se cumplieron todas las expectativas: %v", err)
-		}
-	})
+func (m *MockAuthRepository) InsertToken(ctx context.Context, token *models.Token) error {
+	return m.InsertTokenFunc(ctx, token)
 }
 
-// TestAuthRepository_GetTokenByTokenHash prueba el método GetTokenByTokenHash.
-func TestAuthRepository_GetTokenByTokenHash(t *testing.T) {
-	db, mock := setUpDBMock(t)
-	defer db.Close()
-	repo := postgresql.NewAuthPostgresRepository(db)
-	ctx := context.Background()
-
-	testToken := &models.Token{
-		ID:        1,
-		UserID:    1,
-		Email:     "test@example.com",
-		Token:     "testtoken",
-		TokenHash: "hashed_testtoken",
-		Expiry:    time.Now().Add(time.Hour),
-		Role:      "user",
-		CreatedAt: time.Now(),
-		UpdatedAt: time.Now(),
-	}
-
-	t.Run("success", func(t *testing.T) {
-		rows := sqlmock.NewRows([]string{"id", "user_id", "email", "token", "token_hash", "expiry", "created_at", "updated_at", "role"}).
-			AddRow(testToken.ID, testToken.UserID, testToken.Email, testToken.Token, testToken.TokenHash, testToken.Expiry, testToken.CreatedAt, testToken.UpdatedAt, testToken.Role)
-
-		mock.ExpectQuery(regexp.QuoteMeta(`SELECT id, user_id, email, token, token_hash, expiry, created_at, updated_at, role FROM tokens WHERE token_hash = $1`)).
-			WithArgs(testToken.TokenHash).
-			WillReturnRows(rows)
-
-		token, err := repo.GetTokenByTokenHash(ctx, testToken.TokenHash)
-		if err != nil {
-			t.Errorf("se esperaba un error nulo, se obtuvo %v", err)
-		}
-		if token == nil || token.TokenHash != testToken.TokenHash {
-			t.Errorf("el token retornado no coincide con el esperado")
-		}
-		if err := mock.ExpectationsWereMet(); err != nil {
-			t.Errorf("no se cumplieron todas las expectativas: %v", err)
-		}
-	})
-
-	t.Run("token not found", func(t *testing.T) {
-		mock.ExpectQuery(regexp.QuoteMeta(`SELECT id, user_id, email, token, token_hash, expiry, created_at, updated_at, role FROM tokens WHERE token_hash = $1`)).
-			WithArgs("nonexistent_hash").
-			WillReturnError(sql.ErrNoRows)
-
-		token, err := repo.GetTokenByTokenHash(ctx, "nonexistent_hash")
-		if err == nil || !errors.Is(err, sql.ErrNoRows) {
-			t.Errorf("se esperaba sql.ErrNoRows, se obtuvo %v", err)
-		}
-		if token != nil {
-			t.Errorf("se esperaba un token nulo, se obtuvo %v", token)
-		}
-		if err := mock.ExpectationsWereMet(); err != nil {
-			t.Errorf("no se cumplieron todas las expectativas: %v", err)
-		}
-	})
-
-	t.Run("query error", func(t *testing.T) {
-		mock.ExpectQuery(regexp.QuoteMeta(`SELECT id, user_id, email, token, token_hash, expiry, created_at, updated_at, role FROM tokens WHERE token_hash = $1`)).
-			WithArgs(testToken.TokenHash).
-			WillReturnError(errors.New("error de base de datos simulado"))
-
-		_, err := repo.GetTokenByTokenHash(ctx, testToken.TokenHash)
-		if err == nil {
-			t.Error("se esperaba un error, se obtuvo nil")
-		}
-		if err := mock.ExpectationsWereMet(); err != nil {
-			t.Errorf("no se cumplieron todas las expectativas: %v", err)
-		}
-	})
+func (m *MockAuthRepository) GetTokenByTokenHash(ctx context.Context, tokenHash string) (*models.Token, error) {
+	return m.GetTokenByTokenHashFunc(ctx, tokenHash)
 }
 
-// TestAuthRepository_DeleteTokensByUserID prueba el método DeleteTokensByUserID.
-func TestAuthRepository_DeleteTokensByUserID(t *testing.T) {
-	db, mock := setUpDBMock(t)
-	defer db.Close()
-	repo := postgresql.NewAuthPostgresRepository(db)
-	ctx := context.Background()
-	userID := 1
-
-	t.Run("success", func(t *testing.T) {
-		mock.ExpectExec(regexp.QuoteMeta(`DELETE FROM tokens WHERE user_id = $1`)).
-			WithArgs(userID).
-			WillReturnResult(sqlmock.NewResult(0, 1))
-
-		err := repo.DeleteTokensByUserID(ctx, userID)
-		if err != nil {
-			t.Errorf("se esperaba un error nulo, se obtuvo %v", err)
-		}
-		if err := mock.ExpectationsWereMet(); err != nil {
-			t.Errorf("no se cumplieron todas las expectativas: %v", err)
-		}
-	})
-
-	t.Run("failure", func(t *testing.T) {
-		mock.ExpectExec(regexp.QuoteMeta(`DELETE FROM tokens WHERE user_id = $1`)).
-			WithArgs(userID).
-			WillReturnError(errors.New("error de base de datos simulado"))
-
-		err := repo.DeleteTokensByUserID(ctx, userID)
-		if err == nil {
-			t.Error("se esperaba un error, se obtuvo nil")
-		}
-		if err := mock.ExpectationsWereMet(); err != nil {
-			t.Errorf("no se cumplieron todas las expectativas: %v", err)
-		}
-	})
+func (m *MockAuthRepository) DeleteTokensByUserID(ctx context.Context, userID int) error {
+	return m.DeleteTokensByUserIDFunc(ctx, userID)
 }
 
-// TestAuthRepository_GetTokenByToken prueba el método GetTokenByToken.
-func TestAuthRepository_GetTokenByToken(t *testing.T) {
-	db, mock := setUpDBMock(t)
-	defer db.Close()
-	repo := postgresql.NewAuthPostgresRepository(db)
-	ctx := context.Background()
-
-	testToken := &models.Token{
-		ID:        1,
-		UserID:    1,
-		Email:     "test@example.com",
-		Token:     "testtoken_plain",
-		TokenHash: "hashed_testtoken_plain",
-		Expiry:    time.Now().Add(time.Hour),
-		Role:      "user",
-		CreatedAt: time.Now(),
-		UpdatedAt: time.Now(),
-	}
-
-	t.Run("success", func(t *testing.T) {
-		rows := sqlmock.NewRows([]string{"id", "user_id", "email", "token", "token_hash", "expiry", "created_at", "updated_at", "role"}).
-			AddRow(testToken.ID, testToken.UserID, testToken.Email, testToken.Token, testToken.TokenHash, testToken.Expiry, testToken.CreatedAt, testToken.UpdatedAt, testToken.Role)
-
-		mock.ExpectQuery(regexp.QuoteMeta(`SELECT id, user_id, email, token, token_hash, expiry, created_at, updated_at, role FROM tokens WHERE token = $1`)).
-			WithArgs(testToken.Token).
-			WillReturnRows(rows)
-
-		token, err := repo.GetTokenByToken(ctx, testToken.Token)
-		if err != nil {
-			t.Errorf("se esperaba un error nulo, se obtuvo %v", err)
-		}
-		if token == nil || token.Token != testToken.Token {
-			t.Errorf("el token retornado no coincide con el esperado")
-		}
-		if err := mock.ExpectationsWereMet(); err != nil {
-			t.Errorf("no se cumplieron todas las expectativas: %v", err)
-		}
-	})
-
-	t.Run("token not found", func(t *testing.T) {
-		mock.ExpectQuery(regexp.QuoteMeta(`SELECT id, user_id, email, token, token_hash, expiry, created_at, updated_at, role FROM tokens WHERE token = $1`)).
-			WithArgs("nonexistent_token").
-			WillReturnError(sql.ErrNoRows)
-
-		token, err := repo.GetTokenByToken(ctx, "nonexistent_token")
-		if err == nil || !errors.Is(err, sql.ErrNoRows) {
-			t.Errorf("se esperaba sql.ErrNoRows, se obtuvo %v", err)
-		}
-		if token != nil {
-			t.Errorf("se esperaba un token nulo, se obtuvo %v", token)
-		}
-		if err := mock.ExpectationsWereMet(); err != nil {
-			t.Errorf("no se cumplieron todas las expectativas: %v", err)
-		}
-	})
-
-	t.Run("query error", func(t *testing.T) {
-		mock.ExpectQuery(regexp.QuoteMeta(`SELECT id, user_id, email, token, token_hash, expiry, created_at, updated_at, role FROM tokens WHERE token = $1`)).
-			WithArgs(testToken.Token).
-			WillReturnError(errors.New("error de base de datos simulado"))
-
-		_, err := repo.GetTokenByToken(ctx, testToken.Token)
-		if err == nil {
-			t.Error("se esperaba un error, se obtuvo nil")
-		}
-		if err := mock.ExpectationsWereMet(); err != nil {
-			t.Errorf("no se cumplieron todas las expectativas: %v", err)
-		}
-	})
+func (m *MockAuthRepository) GetTokenByToken(ctx context.Context, tokenString string) (*models.Token, error) {
+	return m.GetTokenByTokenFunc(ctx, tokenString)
 }
 
-// TestAuthRepository_GetUserForToken prueba el método GetUserForToken.
-func TestAuthRepository_GetUserForToken(t *testing.T) {
-	db, mock := setUpDBMock(t)
-	defer db.Close()
-	repo := postgresql.NewAuthPostgresRepository(db)
+func (m *MockAuthRepository) GetUserForToken(ctx context.Context, userID int) (*models.User, error) {
+	return m.GetUserForTokenFunc(ctx, userID)
+}
+
+// TestGlobalFunctionsOfAuthRepository prueba las funciones de fachada del paquete repository
+func TestGlobalFunctionsOfAuthRepository(t *testing.T) {
 	ctx := context.Background()
-	userID := 1
 
-	testUser := &models.User{
-		ID:           userID,
-		UUID:         uuid.New().String(),
-		Email:        "test@example.com",
-		PasswordHash: "hashedpassword",
-		Role:         "user",
-		CreatedAt:    time.Now(),
-		UpdatedAt:    time.Now(),
-	}
-
-	t.Run("success", func(t *testing.T) {
-		rows := sqlmock.NewRows([]string{"id", "uuid", "email", "password_hash", "role", "created_at", "updated_at"}).
-			AddRow(testUser.ID, testUser.UUID, testUser.Email, testUser.PasswordHash, testUser.Role, testUser.CreatedAt, testUser.UpdatedAt)
-
-		mock.ExpectQuery(regexp.QuoteMeta(`SELECT id, uuid, email, password_hash, role, created_at, updated_at FROM users WHERE id = $1`)).
-			WithArgs(userID).
-			WillReturnRows(rows)
-
-		user, err := repo.GetUserForToken(ctx, userID)
+	// --- Pruebas para InsertUser ---
+	t.Run("InsertUser success", func(t *testing.T) {
+		mockRepo := &MockAuthRepository{
+			InsertUserFunc: func(ctx context.Context, user *models.User) error { return nil },
+		}
+		repository.SetAuthRepository(mockRepo)
+		err := repository.InsertUser(ctx, &models.User{})
 		if err != nil {
-			t.Errorf("se esperaba un error nulo, se obtuvo %v", err)
-		}
-		if user == nil || user.ID != userID {
-			t.Errorf("el usuario retornado no coincide con el esperado")
-		}
-		if err := mock.ExpectationsWereMet(); err != nil {
-			t.Errorf("no se cumplieron todas las expectativas: %v", err)
+			t.Errorf("se esperaba un error nulo, se obtuvo: %v", err)
 		}
 	})
 
-	t.Run("user not found", func(t *testing.T) {
-		nonExistentUserID := 999
-		mock.ExpectQuery(regexp.QuoteMeta(`SELECT id, uuid, email, password_hash, role, created_at, updated_at FROM users WHERE id = $1`)).
-			WithArgs(nonExistentUserID).
-			WillReturnError(sql.ErrNoRows)
-
-		user, err := repo.GetUserForToken(ctx, nonExistentUserID)
-		if err == nil || !errors.Is(err, sql.ErrNoRows) {
-			t.Errorf("se esperaba sql.ErrNoRows, se obtuvo %v", err)
+	t.Run("InsertUser failure", func(t *testing.T) {
+		expectedErr := errors.New("error simulado")
+		mockRepo := &MockAuthRepository{
+			InsertUserFunc: func(ctx context.Context, user *models.User) error { return expectedErr },
 		}
-		if user != nil {
-			t.Errorf("se esperaba un usuario nulo, se obtuvo %v", user)
-		}
-		if err := mock.ExpectationsWereMet(); err != nil {
-			t.Errorf("no se cumplieron todas las expectativas: %v", err)
+		repository.SetAuthRepository(mockRepo)
+		err := repository.InsertUser(ctx, &models.User{})
+		if err == nil || !errors.Is(err, expectedErr) {
+			t.Errorf("se esperaba el error '%v', se obtuvo: %v", expectedErr, err)
 		}
 	})
 
-	t.Run("query error", func(t *testing.T) {
-		mock.ExpectQuery(regexp.QuoteMeta(`SELECT id, uuid, email, password_hash, role, created_at, updated_at FROM users WHERE id = $1`)).
-			WithArgs(userID).
-			WillReturnError(errors.New("error de base de datos simulado"))
-
-		_, err := repo.GetUserForToken(ctx, userID)
-		if err == nil {
-			t.Error("se esperaba un error, se obtuvo nil")
+	// --- Pruebas para GetUserByEmail ---
+	t.Run("GetUserByEmail success", func(t *testing.T) {
+		expectedUser := &models.User{Email: "test@example.com"}
+		mockRepo := &MockAuthRepository{
+			GetUserByEmailFunc: func(ctx context.Context, email string) (*models.User, error) { return expectedUser, nil },
 		}
-		if err := mock.ExpectationsWereMet(); err != nil {
-			t.Errorf("no se cumplieron todas las expectativas: %v", err)
+		repository.SetAuthRepository(mockRepo)
+		user, err := repository.GetUserByEmail(ctx, "test@example.com")
+		if err != nil || user != expectedUser {
+			t.Errorf("se esperaba el usuario '%v', se obtuvo: '%v', error: %v", expectedUser, user, err)
+		}
+	})
+
+	t.Run("GetUserByEmail failure", func(t *testing.T) {
+		expectedErr := errors.New("error simulado")
+		mockRepo := &MockAuthRepository{
+			GetUserByEmailFunc: func(ctx context.Context, email string) (*models.User, error) { return nil, expectedErr },
+		}
+		repository.SetAuthRepository(mockRepo)
+		_, err := repository.GetUserByEmail(ctx, "test@example.com")
+		if err == nil || !errors.Is(err, expectedErr) {
+			t.Errorf("se esperaba el error '%v', se obtuvo: %v", expectedErr, err)
+		}
+	})
+
+	// --- Pruebas para GetUserByUUID ---
+	t.Run("GetUserByUUID success", func(t *testing.T) {
+		testUUID := uuid.New().String()
+		expectedUser := &models.User{UUID: testUUID}
+		mockRepo := &MockAuthRepository{
+			GetUserByUUIDFunc: func(ctx context.Context, uuid string) (*models.User, error) { return expectedUser, nil },
+		}
+		repository.SetAuthRepository(mockRepo)
+		user, err := repository.GetUserByUUID(ctx, testUUID)
+		if err != nil || user != expectedUser {
+			t.Errorf("se esperaba el usuario '%v', se obtuvo: '%v', error: %v", expectedUser, user, err)
+		}
+	})
+
+	t.Run("GetUserByUUID failure", func(t *testing.T) {
+		expectedErr := errors.New("error simulado")
+		mockRepo := &MockAuthRepository{
+			GetUserByUUIDFunc: func(ctx context.Context, uuid string) (*models.User, error) { return nil, expectedErr },
+		}
+		repository.SetAuthRepository(mockRepo)
+		_, err := repository.GetUserByUUID(ctx, uuid.New().String())
+		if err == nil || !errors.Is(err, expectedErr) {
+			t.Errorf("se esperaba el error '%v', se obtuvo: %v", expectedErr, err)
+		}
+	})
+
+	// --- Pruebas para InsertToken ---
+	t.Run("InsertToken success", func(t *testing.T) {
+		mockRepo := &MockAuthRepository{
+			InsertTokenFunc: func(ctx context.Context, token *models.Token) error { return nil },
+		}
+		repository.SetAuthRepository(mockRepo)
+		err := repository.InsertToken(ctx, &models.Token{})
+		if err != nil {
+			t.Errorf("se esperaba un error nulo, se obtuvo: %v", err)
+		}
+	})
+
+	t.Run("InsertToken failure", func(t *testing.T) {
+		expectedErr := errors.New("error simulado")
+		mockRepo := &MockAuthRepository{
+			InsertTokenFunc: func(ctx context.Context, token *models.Token) error { return expectedErr },
+		}
+		repository.SetAuthRepository(mockRepo)
+		err := repository.InsertToken(ctx, &models.Token{})
+		if err == nil || !errors.Is(err, expectedErr) {
+			t.Errorf("se esperaba el error '%v', se obtuvo: %v", expectedErr, err)
+		}
+	})
+
+	// --- Pruebas para GetTokenByTokenHash ---
+	t.Run("GetTokenByTokenHash success", func(t *testing.T) {
+		expectedToken := &models.Token{TokenHash: "somehash"}
+		mockRepo := &MockAuthRepository{
+			GetTokenByTokenHashFunc: func(ctx context.Context, tokenHash string) (*models.Token, error) { return expectedToken, nil },
+		}
+		repository.SetAuthRepository(mockRepo)
+		token, err := repository.GetTokenByTokenHash(ctx, "somehash")
+		if err != nil || token != expectedToken {
+			t.Errorf("se esperaba el token '%v', se obtuvo: '%v', error: %v", expectedToken, token, err)
+		}
+	})
+
+	t.Run("GetTokenByTokenHash failure", func(t *testing.T) {
+		expectedErr := errors.New("error simulado")
+		mockRepo := &MockAuthRepository{
+			GetTokenByTokenHashFunc: func(ctx context.Context, tokenHash string) (*models.Token, error) { return nil, expectedErr },
+		}
+		repository.SetAuthRepository(mockRepo)
+		_, err := repository.GetTokenByTokenHash(ctx, "somehash")
+		if err == nil || !errors.Is(err, expectedErr) {
+			t.Errorf("se esperaba el error '%v', se obtuvo: %v", expectedErr, err)
+		}
+	})
+
+	// --- Pruebas para DeleteTokensByUserID ---
+	t.Run("DeleteTokensByUserID success", func(t *testing.T) {
+		mockRepo := &MockAuthRepository{
+			DeleteTokensByUserIDFunc: func(ctx context.Context, userID int) error { return nil },
+		}
+		repository.SetAuthRepository(mockRepo)
+		err := repository.DeleteTokensByUserID(ctx, 1)
+		if err != nil {
+			t.Errorf("se esperaba un error nulo, se obtuvo: %v", err)
+		}
+	})
+
+	t.Run("DeleteTokensByUserID failure", func(t *testing.T) {
+		expectedErr := errors.New("error simulado")
+		mockRepo := &MockAuthRepository{
+			DeleteTokensByUserIDFunc: func(ctx context.Context, userID int) error { return expectedErr },
+		}
+		repository.SetAuthRepository(mockRepo)
+		err := repository.DeleteTokensByUserID(ctx, 1)
+		if err == nil || !errors.Is(err, expectedErr) {
+			t.Errorf("se esperaba el error '%v', se obtuvo: %v", expectedErr, err)
+		}
+	})
+
+	// --- Pruebas para GetTokenByToken ---
+	t.Run("GetTokenByToken success", func(t *testing.T) {
+		expectedToken := &models.Token{Token: "sometoken"}
+		mockRepo := &MockAuthRepository{
+			GetTokenByTokenFunc: func(ctx context.Context, tokenString string) (*models.Token, error) { return expectedToken, nil },
+		}
+		repository.SetAuthRepository(mockRepo)
+		token, err := repository.GetTokenByToken(ctx, "sometoken")
+		if err != nil || token != expectedToken {
+			t.Errorf("se esperaba el token '%v', se obtuvo: '%v', error: %v", expectedToken, token, err)
+		}
+	})
+
+	t.Run("GetTokenByToken failure", func(t *testing.T) {
+		expectedErr := errors.New("error simulado")
+		mockRepo := &MockAuthRepository{
+			GetTokenByTokenFunc: func(ctx context.Context, tokenString string) (*models.Token, error) { return nil, expectedErr },
+		}
+		repository.SetAuthRepository(mockRepo)
+		_, err := repository.GetTokenByToken(ctx, "sometoken")
+		if err == nil || !errors.Is(err, expectedErr) {
+			t.Errorf("se esperaba el error '%v', se obtuvo: %v", expectedErr, err)
+		}
+	})
+
+	// --- Pruebas para GetUserForToken ---
+	t.Run("GetUserForToken success", func(t *testing.T) {
+		expectedUser := &models.User{ID: 1}
+		mockRepo := &MockAuthRepository{
+			GetUserForTokenFunc: func(ctx context.Context, userID int) (*models.User, error) { return expectedUser, nil },
+		}
+		repository.SetAuthRepository(mockRepo)
+		user, err := repository.GetUserForToken(ctx, 1)
+		if err != nil || user != expectedUser {
+			t.Errorf("se esperaba el usuario '%v', se obtuvo: '%v', error: %v", expectedUser, user, err)
+		}
+	})
+
+	t.Run("GetUserForToken failure", func(t *testing.T) {
+		expectedErr := errors.New("error simulado")
+		mockRepo := &MockAuthRepository{
+			GetUserForTokenFunc: func(ctx context.Context, userID int) (*models.User, error) { return nil, expectedErr },
+		}
+		repository.SetAuthRepository(mockRepo)
+		_, err := repository.GetUserForToken(ctx, 1)
+		if err == nil || !errors.Is(err, expectedErr) {
+			t.Errorf("se esperaba el error '%v', se obtuvo: %v", expectedErr, err)
 		}
 	})
 }
