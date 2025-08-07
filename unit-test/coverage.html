@@ -1,0 +1,2092 @@
+
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+		<title>controllers: Go Coverage Report</title>
+		<style>
+			body {
+				background: black;
+				color: rgb(80, 80, 80);
+			}
+			body, pre, #legend span {
+				font-family: Menlo, monospace;
+				font-weight: bold;
+			}
+			#topbar {
+				background: black;
+				position: fixed;
+				top: 0; left: 0; right: 0;
+				height: 42px;
+				border-bottom: 1px solid rgb(80, 80, 80);
+			}
+			#content {
+				margin-top: 50px;
+			}
+			#nav, #legend {
+				float: left;
+				margin-left: 10px;
+			}
+			#legend {
+				margin-top: 12px;
+			}
+			#nav {
+				margin-top: 10px;
+			}
+			#legend span {
+				margin: 0 5px;
+			}
+			.cov0 { color: rgb(192, 0, 0) }
+.cov1 { color: rgb(128, 128, 128) }
+.cov2 { color: rgb(116, 140, 131) }
+.cov3 { color: rgb(104, 152, 134) }
+.cov4 { color: rgb(92, 164, 137) }
+.cov5 { color: rgb(80, 176, 140) }
+.cov6 { color: rgb(68, 188, 143) }
+.cov7 { color: rgb(56, 200, 146) }
+.cov8 { color: rgb(44, 212, 149) }
+.cov9 { color: rgb(32, 224, 152) }
+.cov10 { color: rgb(20, 236, 155) }
+
+		</style>
+	</head>
+	<body>
+		<div id="topbar">
+			<div id="nav">
+				<select id="files">
+				
+				<option value="file0">cloudtrail-enrichment-api-golang/cmd/api/controllers/auth_controller.go (61.9%)</option>
+				
+				<option value="file1">cloudtrail-enrichment-api-golang/cmd/api/controllers/enrichment_controller.go (64.5%)</option>
+				
+				<option value="file2">cloudtrail-enrichment-api-golang/cmd/api/controllers/system_controller.go (100.0%)</option>
+				
+				<option value="file3">cloudtrail-enrichment-api-golang/cmd/api/main.go (0.0%)</option>
+				
+				<option value="file4">cloudtrail-enrichment-api-golang/cmd/api/routes.go (0.0%)</option>
+				
+				<option value="file5">cloudtrail-enrichment-api-golang/database/mongo/mongo.go (87.3%)</option>
+				
+				<option value="file6">cloudtrail-enrichment-api-golang/database/postgresql/auth.go (88.6%)</option>
+				
+				<option value="file7">cloudtrail-enrichment-api-golang/internal/config/config.go (0.0%)</option>
+				
+				<option value="file8">cloudtrail-enrichment-api-golang/internal/middleware/auth.go (100.0%)</option>
+				
+				<option value="file9">cloudtrail-enrichment-api-golang/internal/pkg/logger/logger.go (100.0%)</option>
+				
+				<option value="file10">cloudtrail-enrichment-api-golang/internal/pkg/scopes/get_scope.go (0.0%)</option>
+				
+				<option value="file11">cloudtrail-enrichment-api-golang/internal/pkg/token/jwt.go (69.2%)</option>
+				
+				<option value="file12">cloudtrail-enrichment-api-golang/internal/pkg/utils/utils.go (72.5%)</option>
+				
+				<option value="file13">cloudtrail-enrichment-api-golang/internal/repository/auth_repository.go (100.0%)</option>
+				
+				<option value="file14">cloudtrail-enrichment-api-golang/internal/repository/enrichment_repository.go (100.0%)</option>
+				
+				<option value="file15">cloudtrail-enrichment-api-golang/services/auth_service.go (44.0%)</option>
+				
+				<option value="file16">cloudtrail-enrichment-api-golang/services/enrichment_service.go (70.0%)</option>
+				
+				</select>
+			</div>
+			<div id="legend">
+				<span>not tracked</span>
+			
+				<span class="cov0">not covered</span>
+				<span class="cov8">covered</span>
+			
+			</div>
+		</div>
+		<div id="content">
+		
+		<pre class="file" id="file0" style="display: none">package controllers
+
+import (
+        "cloudtrail-enrichment-api-golang/internal/pkg/logger"
+        "cloudtrail-enrichment-api-golang/internal/pkg/utils"
+        "cloudtrail-enrichment-api-golang/models"
+        "cloudtrail-enrichment-api-golang/services"
+        "errors"
+        "net/http"
+        // Asegúrate de importar uuid si lo usas para generar UUIDs de usuario
+)
+
+// AuthController maneja las solicitudes HTTP relacionadas con la autenticación.
+type AuthController struct {
+        service services.AuthService
+}
+
+// NewAuthController crea una nueva instancia de AuthController.
+func NewAuthController(s services.AuthService) *AuthController <span class="cov8" title="1">{
+        return &amp;AuthController{
+                service: s,
+        }
+}</span>
+
+// RegisterUser maneja el registro de nuevos usuarios.
+func (ac *AuthController) RegisterUser(w http.ResponseWriter, r *http.Request) <span class="cov8" title="1">{
+        var payload models.RegisterPayload
+        err := utils.ReadJSON(w, r, &amp;payload)
+        if err != nil </span><span class="cov8" title="1">{
+                logger.ErrorLog.Printf("Error al decodificar payload de registro: %v", err)
+                utils.ErrorJSON(w, err, http.StatusBadRequest)
+                return
+        }</span>
+
+        // Validaciones básicas de entrada
+        <span class="cov8" title="1">if payload.Email == "" || payload.Password == "" </span><span class="cov0" title="0">{
+                logger.ErrorLog.Println("Email o contraseña vacíos en el registro.")
+                utils.ErrorJSON(w, errors.New("email y contraseña son requeridos"), http.StatusBadRequest)
+                return
+        }</span>
+        // Asignar un rol por defecto si no se especifica o validar el rol
+        <span class="cov8" title="1">if payload.Role == "" </span><span class="cov0" title="0">{
+                payload.Role = "user" // Rol por defecto
+        }</span>
+
+        // Llama al servicio para registrar el usuario
+        <span class="cov8" title="1">user, err := ac.service.RegisterUser(r.Context(), &amp;payload)
+        if err != nil </span><span class="cov0" title="0">{
+                logger.ErrorLog.Printf("Error al registrar usuario en el servicio: %v", err)
+                utils.ErrorJSON(w, err, http.StatusInternalServerError)
+                return
+        }</span>
+
+        <span class="cov8" title="1">response := utils.JSONResponse{
+                Error:   false,
+                Message: "Usuario registrado exitosamente",
+                Data: map[string]string{
+                        "uuid":  user.UUID,
+                        "email": user.Email,
+                        "role":  user.Role,
+                },
+        }
+        utils.WriteJSON(w, http.StatusCreated, response)
+        logger.InfoLog.Printf("Usuario %s registrado con éxito.", user.Email)</span>
+}
+
+// AuthenticateUser maneja el inicio de sesión de usuarios y la generación de tokens.
+func (ac *AuthController) AuthenticateUser(w http.ResponseWriter, r *http.Request) <span class="cov8" title="1">{
+        var payload models.LoginPayload
+        err := utils.ReadJSON(w, r, &amp;payload)
+        if err != nil </span><span class="cov0" title="0">{
+                logger.ErrorLog.Printf("Error al decodificar payload de autenticación: %v", err)
+                utils.ErrorJSON(w, err, http.StatusBadRequest)
+                return
+        }</span>
+
+        <span class="cov8" title="1">if payload.Email == "" || payload.Password == "" </span><span class="cov0" title="0">{
+                logger.ErrorLog.Println("Email o contraseña vacíos en la autenticación.")
+                utils.ErrorJSON(w, errors.New("email y contraseña son requeridos"), http.StatusBadRequest)
+                return
+        }</span>
+
+        // Llama al servicio para autenticar al usuario y obtener el token
+        <span class="cov8" title="1">user, jwtToken, err := ac.service.AuthenticateUser(r.Context(), payload.Email, payload.Password)
+        if err != nil </span><span class="cov8" title="1">{
+                logger.ErrorLog.Printf("Error de autenticación en el servicio para %s: %v", payload.Email, err)
+                utils.ErrorJSON(w, err, http.StatusUnauthorized) // 401 Unauthorized
+                return
+        }</span>
+
+        <span class="cov8" title="1">response := utils.JSONResponse{
+                Error:   false,
+                Message: "Autenticación exitosa",
+                Data: map[string]interface{}{
+                        "user_uuid": user.UUID,
+                        "email":     user.Email,
+                        "role":      user.Role,
+                        "token":     jwtToken.Token, // Incluye el token JWT en la respuesta
+                        "expiry":    jwtToken.Expiry,
+                },
+        }
+        utils.WriteJSON(w, http.StatusOK, response)
+        logger.InfoLog.Printf("Usuario %s autenticado exitosamente y token generado.", user.Email)</span>
+}
+
+// PublicRouteHandler es un ejemplo de un handler para una ruta pública.
+func (ac *AuthController) PublicRouteHandler(w http.ResponseWriter, r *http.Request) <span class="cov0" title="0">{
+        response := utils.JSONResponse{
+                Error:   false,
+                Message: "Esta es una ruta pública, accesible sin autenticación.",
+                Data:    nil,
+        }
+        utils.WriteJSON(w, http.StatusOK, response)
+        logger.InfoLog.Println("Acceso a ruta pública.")
+}</span>
+</pre>
+		
+		<pre class="file" id="file1" style="display: none">package controllers
+
+import (
+        "cloudtrail-enrichment-api-golang/internal/pkg/logger"
+        "cloudtrail-enrichment-api-golang/internal/pkg/utils"
+        "cloudtrail-enrichment-api-golang/models"
+        "cloudtrail-enrichment-api-golang/services"
+        "errors"
+        "fmt"
+        "net/http"
+)
+
+type EnrichmentController struct {
+        service services.EnrichmentService
+}
+
+func NewEnrichmentController(service services.EnrichmentService) *EnrichmentController <span class="cov8" title="1">{
+        return &amp;EnrichmentController{
+                service: service,
+        }
+}</span>
+
+func (ec *EnrichmentController) IngestData(w http.ResponseWriter, r *http.Request) <span class="cov8" title="1">{
+        var eventInput models.Event // Usamos la estructura Event original para la entrada
+
+        err := utils.ReadJSON(w, r, &amp;eventInput)
+        if err != nil </span><span class="cov8" title="1">{
+                logger.ErrorLog.Println("Error al leer JSON de entrada:", err)
+                utils.ErrorJSON(w, err, http.StatusBadRequest)
+                return
+        }</span>
+
+        <span class="cov8" title="1">if len(eventInput.Records) == 0 </span><span class="cov0" title="0">{
+                logger.ErrorLog.Println("El JSON no contiene ningún registro en 'Records'")
+                utils.ErrorJSON(w, errors.New("el JSON no contiene registros en 'Records'"), http.StatusBadRequest)
+                return
+        }</span>
+
+        // var enrichedRecordsResponse []models.EnrichedEventRecord
+        <span class="cov8" title="1">enrichedRecordsResponse, err := ec.service.EnrichEvent(r.Context(), &amp;eventInput) // Pasa el contexto del request y el EventInput completo
+        if err != nil </span><span class="cov0" title="0">{
+                logger.ErrorLog.Printf("Error al enriquecer eventos: %v", err)
+                // Decide el código de estado adecuado. Podría ser 500 si es un error interno del servicio.
+                utils.ErrorJSON(w, fmt.Errorf("error al procesar y enriquecer eventos: %w", err), http.StatusInternalServerError)
+                return
+        }</span>
+
+        <span class="cov8" title="1">payload := utils.JSONResponse{
+                Error:   false,
+                Message: fmt.Sprintf("%d registros procesados y enriquecidos exitosamente", len(enrichedRecordsResponse)),
+                Data:    []interface{}{}, // Devolvemos los records enriquecidos que se guardaron
+                // Data:    enrichedRecordsResponse,
+        }
+
+        if err := utils.WriteJSON(w, http.StatusCreated, payload); err != nil </span><span class="cov0" title="0">{
+                logger.ErrorLog.Println("Error al escribir la respuesta JSON:", err)
+        }</span>
+
+}
+
+func (ec *EnrichmentController) QueryEvents(w http.ResponseWriter, r *http.Request) <span class="cov8" title="1">{
+
+        // Validar que el método sea GET
+        if r.Method != http.MethodGet </span><span class="cov0" title="0">{
+                logger.ErrorLog.Printf("Método no permitido: %s", r.Method)
+                utils.ErrorJSON(w, errors.New("método no permitido"), http.StatusMethodNotAllowed)
+                return
+        }</span>
+
+        // Llamar al servicio para obtener los últimos 10 logs
+        <span class="cov8" title="1">records, err := ec.service.Top10QueryEvents(r.Context())
+        if err != nil </span><span class="cov8" title="1">{
+                logger.ErrorLog.Printf("Error en el controlador al consultar eventos: %v", err)
+                utils.ErrorJSON(w, fmt.Errorf("error al obtener los últimos 10 eventos: %w", err), http.StatusInternalServerError)
+                return
+        }</span>
+
+        // Preparar la respuesta
+        <span class="cov8" title="1">payload := utils.JSONResponse{
+                Error:   false,
+                Message: fmt.Sprintf("Últimos %d eventos enriquecidos obtenidos exitosamente", len(records)),
+                Data:    records, // Devolver los registros obtenidos
+        }
+
+        // Escribir la respuesta JSON
+        if err := utils.WriteJSON(w, http.StatusOK, payload); err != nil </span><span class="cov0" title="0">{
+                logger.ErrorLog.Println("Error al escribir la respuesta JSON:", err)
+        }</span>
+
+}
+</pre>
+		
+		<pre class="file" id="file2" style="display: none">package controllers
+
+import (
+        "cloudtrail-enrichment-api-golang/internal/pkg/logger"
+        "cloudtrail-enrichment-api-golang/internal/pkg/utils"
+        "net/http"
+)
+
+type SystemController struct {
+}
+
+func NewSystemController() *SystemController <span class="cov8" title="1">{
+        return &amp;SystemController{}
+}</span>
+
+func (sc *SystemController) HealthCheck(w http.ResponseWriter, r *http.Request) <span class="cov8" title="1">{
+
+        response := utils.JSONResponse{
+                Error:   false,
+                Message: "API está operativa",
+                Data: map[string]string{
+                        "status": "OK",
+                        "uptime": "server is running",
+                },
+        }
+
+        utils.WriteJSON(w, http.StatusOK, response)
+        logger.InfoLog.Println("Health check realizado: API operativa.")
+}</span>
+</pre>
+		
+		<pre class="file" id="file3" style="display: none">package main
+
+import (
+        "cloudtrail-enrichment-api-golang/cmd/api/controllers"
+        "cloudtrail-enrichment-api-golang/database/mongo"
+        "cloudtrail-enrichment-api-golang/database/postgresql"
+        "cloudtrail-enrichment-api-golang/internal/config"
+        "cloudtrail-enrichment-api-golang/internal/middleware"
+        "cloudtrail-enrichment-api-golang/internal/pkg/logger"
+        "cloudtrail-enrichment-api-golang/internal/pkg/token"
+        "cloudtrail-enrichment-api-golang/internal/repository"
+        "cloudtrail-enrichment-api-golang/services"
+        "context"
+
+        "crypto/tls"
+        "database/sql"
+        "fmt"
+        "log"
+        "net/http"
+        "os"
+)
+
+type application struct {
+        config   *config.Config
+        infoLog  *log.Logger
+        errorLog *log.Logger
+        // models     models.Models
+        middleware *middleware.Middleware
+        // productsController *controllers.ProductsController
+        authController       *controllers.AuthController
+        systemController     *controllers.SystemController
+        enrichmentController *controllers.EnrichmentController
+}
+
+func main() <span class="cov0" title="0">{
+        logger.Init() // Inicializa logger con os.Stdout, os.Stderr
+        config, err := config.LoadConfig()
+        if err != nil </span><span class="cov0" title="0">{
+                log.Fatal("Error al cargar la configuración:", err)
+                logger.ErrorLog.Fatalf("Error al cargar la configuración: %v", err)
+        }</span>
+
+        <span class="cov0" title="0">logger.InfoLog.Println("Servidor iniciado")
+        fmt.Println(config.DatabaseConfig.Database)
+
+        dsn := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=%s",
+                config.DatabaseConfig.Host,
+                config.DatabaseConfig.Port,
+                config.DatabaseConfig.Username,
+                config.DatabaseConfig.Password,
+                config.DatabaseConfig.Database,
+                config.DatabaseConfig.SSLMode,
+        )
+
+        db, err := sql.Open("postgres", dsn)
+        if err != nil </span><span class="cov0" title="0">{
+                log.Fatal("Error al abrir la conexión con la base de datos:", err)
+                logger.ErrorLog.Fatalf("Error al abrir la conexión con la base de datos: %v", err)
+        }</span>
+
+        <span class="cov0" title="0">if err = db.Ping(); err != nil </span><span class="cov0" title="0">{
+                log.Fatal("Error al conectar con la base de datos:", err)
+                logger.ErrorLog.Fatalf("Error al conectar con la base de datos: %v", err)
+        }</span>
+        <span class="cov0" title="0">logger.InfoLog.Println("Conexión a la base de datos PostgreSQL establecida exitosamente.")
+
+        defer func() </span><span class="cov0" title="0">{
+                if err := db.Close(); err != nil </span><span class="cov0" title="0">{
+                        logger.ErrorLog.Printf("Error al cerrar la conexión principal a la base de datos: %v", err)
+                }</span>
+        }()
+
+        <span class="cov0" title="0">mongoURI := mongo.BuildMongoURI(&amp;config.MongoDBConfig)
+
+        mongoClient, err := mongo.NewMongoClient(mongoURI, config.MongoDBConfig.DBTimeout)
+        if err != nil </span><span class="cov0" title="0">{
+                log.Fatal("Error al conectar a MongoDB:", err)
+                logger.ErrorLog.Fatalf("Error al conectar a MongoDB: %v", err)
+        }</span>
+        // logger.InfoLog.Println("Conexión a MongoDB establecida exitosamente.")
+
+        <span class="cov0" title="0">defer func() </span><span class="cov0" title="0">{
+                // Desconectar el cliente de MongoDB al finalizar
+                if err := mongoClient.Disconnect(context.Background()); err != nil </span><span class="cov0" title="0">{
+                        logger.ErrorLog.Printf("Error al cerrar la conexión a MongoDB: %v", err)
+                }</span>
+        }()
+
+        // --- Conexión a MongoDB (para enriquecimiento) ---
+        // mongoClient, err := mongo.NewMongoClient(config)
+        // if err != nil {
+        //         log.Fatal("Error al conectar a MongoDB:", err)
+        //         logger.ErrorLog.Fatalf("Error al conectar a MongoDB: %v", err)
+        // }
+        // defer func() {
+        //         if err := mongoClient.Client.Disconnect(context.Background()); err != nil {
+        //                 logger.ErrorLog.Printf("Error al cerrar la conexión a MongoDB: %v", err)
+        //         }
+        // }()
+        // logger.InfoLog.Println("Conexión a MongoDB establecida exitosamente.")
+
+        // Inicialización del repositorio de autenticación
+        <span class="cov0" title="0">authRepo := postgresql.NewAuthPostgresRepository(db)
+
+        // Antes recibia solo mongoClient
+        enrichRepo := mongo.NewEnrichMongoRepository(mongoClient, config.MongoDBConfig.Database, config.MongoDBConfig.Collection)
+
+        repository.SetAuthRepository(authRepo)         // Setear la implementación global del AuthRepo
+        repository.SetEnrichmentRepository(enrichRepo) // Setear la implementación global del AuthRepo
+
+        // AHORA: Creamos una instancia de JWTService, no de JWTToken
+        jwtService := token.NewJWTService(config, authRepo) // CAMBIO IMPORTANTE AQUÍ
+
+        // Inicialización de servicios
+        // PASAMOS jwtService al servicio de autenticación
+        authService := services.NewAuthService(repository.AuthRepo, jwtService) // CAMBIO IMPORTANTE AQUÍ
+        // enrichService := services.NewDefaultEnrichmentService(repository.EnrichmentRepo)
+        enrichService := services.NewDefaultEnrichmentService(repository.EnrichmentRepo)
+
+        // Inicialización de controladores
+        authController := controllers.NewAuthController(authService)
+        systemController := controllers.NewSystemController()
+        enrichmentController := controllers.NewEnrichmentController(enrichService)
+
+        // PASAMOS jwtService al middleware
+        mw := middleware.NewMiddleware(jwtService, authService) // CAMBIO IMPORTANTE AQUÍ
+
+        app := &amp;application{
+                config:     config,
+                infoLog:    logger.InfoLog,
+                errorLog:   logger.ErrorLog,
+                middleware: mw,
+                // productsController: productsController,
+                authController:       authController,
+                systemController:     systemController,
+                enrichmentController: enrichmentController,
+        }
+
+        err = app.serve()
+        if err != nil </span><span class="cov0" title="0">{
+                log.Fatal(err)
+                logger.ErrorLog.Fatal(err)
+        }</span>
+}
+
+func (app *application) serve() error <span class="cov0" title="0">{
+        app.infoLog.Printf("API escuchando en el puerto %d", app.config.ServerConfig.Port)
+
+        certFile := app.config.ServerConfig.TLS.CertFile
+        keyFile := app.config.ServerConfig.TLS.KeyFile
+
+        // Solo cargar certificados TLS si los archivos existen
+        if _, err := os.Stat(certFile); os.IsNotExist(err) || (certFile == "" &amp;&amp; keyFile == "") </span><span class="cov0" title="0">{
+                app.infoLog.Println("Archivos de certificado TLS no encontrados o no especificados. Iniciando servidor HTTP plano.")
+                srv := &amp;http.Server{
+                        Addr:    fmt.Sprintf(":%d", app.config.ServerConfig.Port),
+                        Handler: app.routes(),
+                }
+                return srv.ListenAndServe()
+        }</span>
+
+        <span class="cov0" title="0">cert, err := tls.LoadX509KeyPair(certFile, keyFile)
+        if err != nil </span><span class="cov0" title="0">{
+                return fmt.Errorf("error cargando certificados TLS: %v", err)
+        }</span>
+
+        <span class="cov0" title="0">tlsConfig := &amp;tls.Config{
+                Certificates: []tls.Certificate{cert},
+                MinVersion:   tls.VersionTLS13,
+                MaxVersion:   tls.VersionTLS13,
+                ClientAuth:   tls.RequireAnyClientCert,
+        }
+
+        srv := &amp;http.Server{
+                Addr:      fmt.Sprintf(":%d", app.config.ServerConfig.Port),
+                Handler:   app.routes(),
+                TLSConfig: tlsConfig,
+        }
+
+        app.infoLog.Printf("Iniciando servidor HTTPS con certificados en %s y %s", certFile, keyFile)
+        return srv.ListenAndServeTLS("", "")</span>
+}
+</pre>
+		
+		<pre class="file" id="file4" style="display: none">package main
+
+import (
+        "cloudtrail-enrichment-api-golang/internal/pkg/utils"
+        "encoding/json"
+        "net/http"
+
+        "github.com/go-chi/chi"
+        "github.com/go-chi/chi/middleware"
+        "github.com/go-chi/cors"
+)
+
+func (app *application) routes() http.Handler <span class="cov0" title="0">{
+        mux := chi.NewRouter()
+        mux.Use(middleware.Recoverer)
+        mux.Use(cors.Handler(cors.Options{
+                AllowedOrigins:   []string{"https://*", "http://*"},
+                AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+                AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token"},
+                ExposedHeaders:   []string{"Link"},
+                AllowCredentials: true,
+                MaxAge:           300,
+        }))
+
+        // Grupo de rutas para la versión 1 de la API
+        mux.Route("/v1", func(r chi.Router) </span><span class="cov0" title="0">{
+                // Rutas públicas de la V1
+
+                r.Get("/health", app.systemController.HealthCheck)
+                r.Post("/signup", app.authController.RegisterUser)
+                r.Post("/login", app.authController.AuthenticateUser)
+
+                // Rutas protegidas por el middleware de autenticación de la V1
+                r.Route("/enrichment", func(r chi.Router) </span><span class="cov0" title="0">{
+                        r.Use(app.middleware.AuthTokenMiddleware)
+                        r.Post("/", app.enrichmentController.IngestData)
+                        r.Get("/", app.enrichmentController.QueryEvents)
+                }</span>)
+
+                // r.Route("/admin", func(r chi.Router) {
+                //         r.Use(app.middleware.AuthTokenMiddleware)
+                //         // Authorization middleware with roles example
+                //         r.Get("/dashboard", app.AdminDashboard)
+                // })
+        })
+
+        <span class="cov0" title="0">return mux</span>
+}
+
+func (app *application) Health(w http.ResponseWriter, r *http.Request) <span class="cov0" title="0">{
+        response := map[string]string{
+                "status": "OK",
+                "uptime": "server is healthy",
+        }
+
+        w.Header().Set("Content-Type", "application/json")
+        json.NewEncoder(w).Encode(response)
+}</span>
+
+// AdminDashboard es un handler de ejemplo para una ruta protegida.
+func (app *application) AdminDashboard(w http.ResponseWriter, r *http.Request) <span class="cov0" title="0">{
+        response := map[string]string{
+                "message": "Bienvenido al panel de administración!",
+        }
+        utils.WriteJSON(w, http.StatusOK, utils.JSONResponse{
+                Error:   false,
+                Message: "Dashboard de administración",
+                Data:    response,
+        })
+}</span>
+</pre>
+		
+		<pre class="file" id="file5" style="display: none">package mongo
+
+import (
+        "cloudtrail-enrichment-api-golang/internal/config"
+        "cloudtrail-enrichment-api-golang/internal/pkg/logger"
+        "cloudtrail-enrichment-api-golang/models"
+        "context"
+        "fmt"
+        "time"
+
+        "go.mongodb.org/mongo-driver/bson"
+        "go.mongodb.org/mongo-driver/mongo"
+        "go.mongodb.org/mongo-driver/mongo/options"
+        "go.mongodb.org/mongo-driver/mongo/readpref"
+)
+
+// MongoInstance encapsula la conexión a MongoDB y la colección específica.
+// *EnrichMongoRepository  (Alternativa)
+type MongoInstance struct {
+        Client     *mongo.Client
+        Collection *mongo.Collection
+}
+
+func BuildMongoURI(cfg *config.MongoDBConfig) string <span class="cov8" title="1">{
+        var mongoURI string
+        if cfg.Username != "" &amp;&amp; cfg.Password != "" </span><span class="cov8" title="1">{
+                // Incluye el nombre de la base de datos en la URI si se usan credenciales,
+                // y opcionalmente authSource si la base de datos de autenticación es diferente.
+                // Asumimos authSource=admin por defecto si las credenciales son proporcionadas.
+                mongoURI = fmt.Sprintf("mongodb://%s:%s@%s:%d/%s?authSource=admin",
+                        cfg.Username, cfg.Password, cfg.Host, cfg.Port, cfg.Database)
+        }</span> else<span class="cov8" title="1"> {
+                // Si no hay credenciales, solo host, puerto y base de datos.
+                mongoURI = fmt.Sprintf("mongodb://%s:%d/%s", cfg.Host, cfg.Port, cfg.Database)
+        }</span>
+        <span class="cov8" title="1">logger.InfoLog.Printf("Construyendo MONGO_URI a partir de configuraciones: %s", mongoURI)
+        return mongoURI</span>
+}
+
+// NewMongoClient establece una nueva conexión a MongoDB y devuelve una instancia de MongoInstance.
+// func NewMongoClient(cfg *config.Config) (*MongoInstance, error) {
+//         // Usar la configuración específica de MongoDB
+//         mongoCfg := cfg.MongoDBConfig
+
+//         ctx, cancel := context.WithTimeout(context.Background(), mongoCfg.DBTimeout)
+//         defer cancel()
+
+//         // Intentar obtener la MONGO_URI completa de las variables de entorno primero
+//         mongoURI := os.Getenv("MONGO_URI")
+//         if mongoURI == "" {
+//                 // Si MONGO_URI no está definida, construirla desde los parámetros individuales
+//                 mongoURI = fmt.Sprintf("mongodb://%s:%d", mongoCfg.Host, mongoCfg.Port)
+//                 if mongoCfg.Username != "" &amp;&amp; mongoCfg.Password != "" {
+//                         mongoURI = fmt.Sprintf("mongodb://%s:%s@%s:%d", mongoCfg.Username, mongoCfg.Password, mongoCfg.Host, mongoCfg.Port)
+//                         // Se recomienda especificar authSource si usas credenciales de usuario/contraseña
+//                         mongoURI = fmt.Sprintf("%s/%s?authSource=admin", mongoURI, mongoCfg.Database)
+//                 } else {
+//                         // Si no hay credenciales, solo añadir la base de datos a la URI
+//                         mongoURI = fmt.Sprintf("%s/%s", mongoURI, mongoCfg.Database)
+//                 }
+//                 logger.InfoLog.Println("Construyendo MONGO_URI a partir de configuraciones individuales.")
+//         } else {
+//                 logger.InfoLog.Println("Usando MONGO_URI desde variables de entorno para la conexión a MongoDB.")
+//         }
+
+//         clientOptions := options.Client().ApplyURI(mongoURI)
+//         client, err := mongo.Connect(ctx, clientOptions)
+//         if err != nil {
+//                 logger.ErrorLog.Printf("Error al conectar a MongoDB: %v", err)
+//                 return nil, fmt.Errorf("error al conectar a MongoDB: %w", err)
+//         }
+
+//         // Haz ping a la base de datos para verificar la conexión
+//         err = client.Ping(ctx, readpref.Primary())
+//         if err != nil {
+//                 logger.ErrorLog.Printf("Error al hacer ping a MongoDB: %v", err)
+//                 return nil, fmt.Errorf("error al hacer ping a MongoDB: %w", err)
+//         }
+
+//         logger.InfoLog.Println("Conexión a MongoDB establecida exitosamente.")
+
+//         // Aquí asumimos una base de datos y colección específicas para los eventos de enriquecimiento
+//         collection := client.Database(cfg.MongoDBConfig.Database).Collection("enriched_events")
+
+//         return &amp;MongoInstance{Client: client, Collection: collection}, nil
+// }
+
+func NewMongoClient(mongoURI string, timeout time.Duration) (*mongo.Client, error) <span class="cov8" title="1">{
+        ctx, cancel := context.WithTimeout(context.Background(), timeout)
+        defer cancel()
+
+        logger.InfoLog.Printf("[DEBUG] URI de MongoDB final usada para la conexión: %s", mongoURI)
+
+        clientOptions := options.Client().ApplyURI(mongoURI)
+        client, err := mongo.Connect(ctx, clientOptions)
+        if err != nil </span><span class="cov0" title="0">{
+                logger.ErrorLog.Printf("Error al conectar a MongoDB: %v", err)
+                return nil, fmt.Errorf("error al conectar a MongoDB: %w", err)
+        }</span>
+
+        // Haz ping a la base de datos para verificar la conexión
+        <span class="cov8" title="1">err = client.Ping(ctx, readpref.Primary())
+        if err != nil </span><span class="cov8" title="1">{
+                logger.ErrorLog.Printf("Error al hacer ping a MongoDB: %v", err)
+                // Desconectar el cliente si el ping falla para liberar recursos.
+                if disconnectErr := client.Disconnect(context.Background()); disconnectErr != nil </span><span class="cov0" title="0">{
+                        logger.ErrorLog.Printf("Error al desconectar el cliente de MongoDB después de un fallo en el ping: %v", disconnectErr)
+                }</span>
+                <span class="cov8" title="1">return nil, fmt.Errorf("error al hacer ping a MongoDB: %w", err)</span>
+        }
+
+        <span class="cov0" title="0">logger.InfoLog.Println("Conexión a MongoDB establecida exitosamente.")
+        return client, nil</span>
+}
+
+// EnrichmentMongoRepository implementa la interfaz EnrichmentRepository para MongoDB.
+type EnrichmentMongoRepository struct {
+        mongoInstance *MongoInstance
+}
+
+// NewEnrichMongoRepository crea una nueva instancia de EnrichmentMongoRepository.
+// func NewEnrichMongoRepository(mi *MongoInstance) *EnrichmentMongoRepository {
+//         return &amp;EnrichmentMongoRepository{mongoInstance: mi}
+// }
+
+func NewEnrichMongoRepository(client *mongo.Client, dbName, collectionName string) *EnrichmentMongoRepository <span class="cov8" title="1">{
+        logger.InfoLog.Printf("[DEBUG] Conectando a MongoDB. Base de datos: '%s', Colección: '%s'", dbName, collectionName)
+        collection := client.Database(dbName).Collection(collectionName)
+
+        return &amp;EnrichmentMongoRepository{
+                mongoInstance: &amp;MongoInstance{
+                        Client:     client,
+                        Collection: collection,
+                },
+        }
+}</span>
+
+// InsertLog inserta un nuevo registro de evento enriquecido en MongoDB.
+func (m *EnrichmentMongoRepository) InsertLog(ctx context.Context, event *models.EnrichedEventRecord) error <span class="cov8" title="1">{
+        ctx, cancel := context.WithTimeout(ctx, 5*time.Second) // Usar el timeout del contexto, o definir uno si es nil
+        defer cancel()
+
+        _, err := m.mongoInstance.Collection.InsertOne(ctx, event)
+        if err != nil </span><span class="cov8" title="1">{
+                logger.ErrorLog.Printf("Error al insertar evento enriquecido en MongoDB: %v", err)
+                return fmt.Errorf("error al insertar evento enriquecido: %w", err)
+        }</span>
+        <span class="cov8" title="1">logger.InfoLog.Printf("Evento enriquecido insertado en MongoDB. EventSource: %s", event.EventSource)
+        return nil</span>
+}
+
+// GetLatestLogs recupera los últimos 10 registros de eventos enriquecidos de MongoDB.
+func (m *EnrichmentMongoRepository) GetLatestLogs(ctx context.Context) ([]*models.EnrichedEventRecord, error) <span class="cov8" title="1">{
+        ctx, cancel := context.WithTimeout(ctx, 5*time.Second) // Usar el timeout del contexto, o definir uno si es nil
+        defer cancel()
+
+        var events []*models.EnrichedEventRecord
+        findOptions := options.Find()
+        findOptions.SetSort(bson.D{{Key: "eventTime", Value: -1}}) // Ordenar por fecha de evento descendente (-1 most recent)
+        findOptions.SetLimit(10)                                   // Limitar a los últimos 10
+
+        cursor, err := m.mongoInstance.Collection.Find(ctx, bson.D{}, findOptions)
+        if err != nil </span><span class="cov8" title="1">{
+                logger.ErrorLog.Printf("Error al obtener los últimos eventos enriquecidos de MongoDB: %v", err)
+                return nil, fmt.Errorf("error al obtener los últimos eventos enriquecidos: %w", err)
+        }</span>
+        <span class="cov8" title="1">defer cursor.Close(ctx)
+
+        for cursor.Next(ctx) </span><span class="cov8" title="1">{
+                var event models.EnrichedEventRecord
+                if err := cursor.Decode(&amp;event); err != nil </span><span class="cov8" title="1">{
+                        logger.ErrorLog.Printf("Error al decodificar evento de MongoDB: %v", err)
+                        return nil, fmt.Errorf("error al decodificar evento: %w", err)
+                }</span>
+                <span class="cov8" title="1">events = append(events, &amp;event)</span>
+        }
+
+        <span class="cov8" title="1">if err := cursor.Err(); err != nil </span><span class="cov0" title="0">{
+                logger.ErrorLog.Printf("Error en el cursor de MongoDB: %v", err)
+                return nil, fmt.Errorf("error en el cursor de MongoDB: %w", err)
+        }</span>
+
+        <span class="cov8" title="1">logger.InfoLog.Println("Últimos 10 eventos enriquecidos obtenidos de MongoDB.")
+        return events, nil</span>
+}
+</pre>
+		
+		<pre class="file" id="file6" style="display: none">package postgresql
+
+import (
+        "cloudtrail-enrichment-api-golang/internal/pkg/logger"
+        "cloudtrail-enrichment-api-golang/models"
+        "context"
+        "database/sql"
+        "fmt"
+        "time"
+
+        _ "github.com/lib/pq" // Importa el driver de PostgreSQL
+)
+
+// AuthPostgresRepository implementa la interfaz AuthRepository para PostgreSQL.
+type AuthPostgresRepository struct {
+        db *sql.DB
+}
+
+// NewAuthPostgresRepository crea una nueva instancia de AuthPostgresRepository.
+// Recibe un *sql.DB ya inicializado para compartir la conexión.
+func NewAuthPostgresRepository(db *sql.DB) *AuthPostgresRepository <span class="cov8" title="1">{
+        return &amp;AuthPostgresRepository{db: db}
+}</span>
+
+// InsertUser inserta un nuevo usuario en la base de datos.
+func (r *AuthPostgresRepository) InsertUser(ctx context.Context, user *models.User) error <span class="cov8" title="1">{
+        query := `INSERT INTO users (uuid, email, password_hash, role, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`
+        user.CreatedAt = time.Now()
+        user.UpdatedAt = time.Now()
+
+        err := r.db.QueryRowContext(ctx, query, user.UUID, user.Email, user.PasswordHash, user.Role, user.CreatedAt, user.UpdatedAt).Scan(&amp;user.ID)
+        if err != nil </span><span class="cov8" title="1">{
+                logger.ErrorLog.Printf("Error al insertar usuario en la base de datos: %v", err)
+                return fmt.Errorf("error al insertar usuario: %w", err)
+        }</span>
+        <span class="cov8" title="1">logger.InfoLog.Printf("Usuario insertado en DB con ID: %d y UUID: %s", user.ID, user.UUID)
+        return nil</span>
+}
+
+// GetUserByEmail recupera un usuario por su dirección de correo electrónico.
+func (r *AuthPostgresRepository) GetUserByEmail(ctx context.Context, email string) (*models.User, error) <span class="cov8" title="1">{
+        query := `SELECT id, uuid, email, password_hash, role, created_at, updated_at FROM users WHERE email = $1`
+        row := r.db.QueryRowContext(ctx, query, email)
+        user := &amp;models.User{}
+        err := row.Scan(&amp;user.ID, &amp;user.UUID, &amp;user.Email, &amp;user.PasswordHash, &amp;user.Role, &amp;user.CreatedAt, &amp;user.UpdatedAt)
+        if err != nil </span><span class="cov8" title="1">{
+                if err == sql.ErrNoRows </span><span class="cov8" title="1">{
+                        logger.InfoLog.Printf("Usuario con email %s no encontrado en la DB.", email)
+                        return nil, sql.ErrNoRows
+                }</span>
+                <span class="cov0" title="0">logger.ErrorLog.Printf("Error al obtener usuario por email %s desde la base de datos: %v", email, err)
+                return nil, fmt.Errorf("error al obtener usuario por email: %w", err)</span>
+        }
+        <span class="cov8" title="1">logger.InfoLog.Printf("Usuario con email %s obtenido de DB.", email)
+        return user, nil</span>
+}
+
+// GetUserByUUID recupera un usuario por su UUID.
+func (r *AuthPostgresRepository) GetUserByUUID(ctx context.Context, uuid string) (*models.User, error) <span class="cov8" title="1">{
+        query := `SELECT id, uuid, email, password_hash, role, created_at, updated_at FROM users WHERE uuid = $1`
+        row := r.db.QueryRowContext(ctx, query, uuid)
+        user := &amp;models.User{}
+        err := row.Scan(&amp;user.ID, &amp;user.UUID, &amp;user.Email, &amp;user.PasswordHash, &amp;user.Role, &amp;user.CreatedAt, &amp;user.UpdatedAt)
+        if err != nil </span><span class="cov8" title="1">{
+                if err == sql.ErrNoRows </span><span class="cov8" title="1">{
+                        logger.InfoLog.Printf("Usuario con UUID %s no encontrado en la DB.", uuid)
+                        return nil, sql.ErrNoRows
+                }</span>
+                <span class="cov0" title="0">logger.ErrorLog.Printf("Error al obtener usuario por UUID %s desde la base de datos: %v", uuid, err)
+                return nil, fmt.Errorf("error al obtener usuario por UUID: %w", err)</span>
+        }
+        <span class="cov8" title="1">logger.InfoLog.Printf("Usuario con UUID %s obtenido de DB.", uuid)
+        return user, nil</span>
+}
+
+// InsertToken inserta un nuevo token en la base de datos.
+func (r *AuthPostgresRepository) InsertToken(ctx context.Context, token *models.Token) error <span class="cov8" title="1">{
+        // Asegurarse de que se inserta el 'role'
+        query := `INSERT INTO tokens (user_id, email, token, token_hash, expiry, created_at, updated_at, role) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`
+        token.CreatedAt = time.Now()
+        token.UpdatedAt = time.Now()
+        _, err := r.db.ExecContext(ctx, query, token.UserID, token.Email, token.Token, token.TokenHash, token.Expiry, token.CreatedAt, token.UpdatedAt, token.Role)
+        if err != nil </span><span class="cov8" title="1">{
+                logger.ErrorLog.Printf("Error al insertar token en la base de datos: %v", err)
+                return fmt.Errorf("error al insertar token: %w", err)
+        }</span>
+        <span class="cov8" title="1">logger.InfoLog.Printf("Token insertado en DB para UserID: %d", token.UserID)
+        return nil</span>
+}
+
+// GetTokenByTokenHash recupera un token por su hash desde la base de datos.
+func (r *AuthPostgresRepository) GetTokenByTokenHash(ctx context.Context, tokenHash string) (*models.Token, error) <span class="cov8" title="1">{
+        query := `SELECT id, user_id, email, token, token_hash, expiry, created_at, updated_at, role FROM tokens WHERE token_hash = $1`
+        row := r.db.QueryRowContext(ctx, query, tokenHash)
+        token := &amp;models.Token{}
+        err := row.Scan(&amp;token.ID, &amp;token.UserID, &amp;token.Email, &amp;token.Token, &amp;token.TokenHash, &amp;token.Expiry, &amp;token.CreatedAt, &amp;token.UpdatedAt, &amp;token.Role)
+        if err != nil </span><span class="cov8" title="1">{
+                if err == sql.ErrNoRows </span><span class="cov8" title="1">{
+                        logger.InfoLog.Printf("Token con hash %s no encontrado en la DB.", tokenHash)
+                        return nil, sql.ErrNoRows
+                }</span>
+                <span class="cov0" title="0">logger.ErrorLog.Printf("Error al obtener token por hash %s desde la base de datos: %v", tokenHash, err)
+                return nil, fmt.Errorf("error al obtener token por hash: %w", err)</span>
+        }
+        <span class="cov8" title="1">logger.InfoLog.Printf("Token con hash %s obtenido de DB para UserID: %d", tokenHash, token.UserID)
+        return token, nil</span>
+}
+
+// DeleteTokensByUserID elimina todos los tokens asociados a un UserID específico.
+func (r *AuthPostgresRepository) DeleteTokensByUserID(ctx context.Context, userID int) error <span class="cov8" title="1">{
+        query := `DELETE FROM tokens WHERE user_id = $1`
+        fmt.Println("Ejecutando consulta EN REPO:", query, "con UserID:", userID)
+
+        _, err := r.db.ExecContext(ctx, query, userID)
+        fmt.Println("ERROR EJECUTANDO DELETE:", err)
+        if err != nil </span><span class="cov8" title="1">{
+                logger.ErrorLog.Printf("Error al eliminar tokens para el usuario %d desde la base de datos: %v", userID, err)
+                return fmt.Errorf("error al eliminar tokens por UserID: %w", err)
+        }</span>
+        <span class="cov8" title="1">logger.InfoLog.Printf("Tokens eliminados para UserID: %d", userID)
+        return nil</span>
+}
+
+// GetTokenByToken recupera un token por su valor de texto plano desde la base de datos.
+func (r *AuthPostgresRepository) GetTokenByToken(ctx context.Context, tokenString string) (*models.Token, error) <span class="cov8" title="1">{
+        query := `SELECT id, user_id, email, token, token_hash, expiry, created_at, updated_at, role FROM tokens WHERE token = $1`
+        row := r.db.QueryRowContext(ctx, query, tokenString)
+        token := &amp;models.Token{}
+        err := row.Scan(&amp;token.ID, &amp;token.UserID, &amp;token.Email, &amp;token.Token, &amp;token.TokenHash, &amp;token.Expiry, &amp;token.CreatedAt, &amp;token.UpdatedAt, &amp;token.Role)
+        if err != nil </span><span class="cov8" title="1">{
+                if err == sql.ErrNoRows </span><span class="cov8" title="1">{
+                        logger.InfoLog.Printf("Token con valor %s no encontrado en la DB.", tokenString)
+                        return nil, sql.ErrNoRows
+                }</span>
+                <span class="cov0" title="0">logger.ErrorLog.Printf("Error al obtener token por valor %s desde la base de datos: %v", tokenString, err)
+                return nil, fmt.Errorf("error al obtener token por valor: %w", err)</span>
+        }
+        <span class="cov8" title="1">logger.InfoLog.Printf("Token con valor %s obtenido de DB para UserID: %d", tokenString, token.UserID)
+        return token, nil</span>
+}
+
+// GetUserForToken recupera un usuario por su ID.
+func (r *AuthPostgresRepository) GetUserForToken(ctx context.Context, userID int) (*models.User, error) <span class="cov8" title="1">{
+        query := `SELECT id, uuid, email, password_hash, role, created_at, updated_at FROM users WHERE id = $1`
+        row := r.db.QueryRowContext(ctx, query, userID)
+        user := &amp;models.User{}
+        err := row.Scan(&amp;user.ID, &amp;user.UUID, &amp;user.Email, &amp;user.PasswordHash, &amp;user.Role, &amp;user.CreatedAt, &amp;user.UpdatedAt)
+        if err != nil </span><span class="cov8" title="1">{
+                if err == sql.ErrNoRows </span><span class="cov8" title="1">{
+                        logger.InfoLog.Printf("Usuario con ID %d no encontrado en la DB.", userID)
+                        return nil, sql.ErrNoRows
+                }</span>
+                <span class="cov0" title="0">logger.ErrorLog.Printf("Error al obtener usuario por ID %d desde la base de datos: %v", userID, err)
+                return nil, fmt.Errorf("error al obtener usuario por ID: %w", err)</span>
+        }
+        <span class="cov8" title="1">logger.InfoLog.Printf("Usuario con ID %d obtenido de DB.", userID)
+        return user, nil</span>
+}
+
+// Puedes añadir una función para insertar tokens si decides persistir tokens de refresco o gestionar listas negras.
+// func (r *AuthPostgresRepository) InsertToken(ctx context.Context, token *models.Token) error {
+//         query := `INSERT INTO tokens (user_id, token, token_hash, expiry, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6)`
+//         token.CreatedAt = time.Now()
+//         token.UpdatedAt = time.Now()
+//         _, err := r.db.ExecContext(ctx, query, token.UserID, token.Token, token.TokenHash, token.Expiry, token.CreatedAt, token.UpdatedAt)
+//         if err != nil {
+//                 logger.ErrorLog.Printf("Error al insertar token en la base de datos: %v", err)
+//                 return fmt.Errorf("error al insertar token: %w", err)
+//         }
+//         return nil
+// }
+</pre>
+		
+		<pre class="file" id="file7" style="display: none">package config
+
+import (
+        "cloudtrail-enrichment-api-golang/internal/pkg/logger"
+        "cloudtrail-enrichment-api-golang/internal/pkg/scopes"
+        "encoding/json"
+        "fmt"
+        "os"
+        "strconv"
+        "time"
+)
+
+// var (
+//         productsAPIConfig ProductsConfig
+// )
+
+var (
+        appConfig Config
+)
+
+func LoadConfig() (*Config, error) <span class="cov0" title="0">{
+
+        var (
+                config Config
+                raw    []byte
+                err    error
+        )
+
+        fmt.Println("Scope:", scopes.GetTypeScope())
+
+        switch scopes.GetTypeScope() </span>{
+        case "local":<span class="cov0" title="0">
+                // Para ejecución local, lee desde la ruta relativa del archivo scaffold_config
+                raw, err = os.ReadFile("./internal/config/scaffold_config")
+                if err != nil </span><span class="cov0" title="0">{
+                        logger.ErrorLog.Println("[config] error reading local config file", err)
+                        return nil, fmt.Errorf("[config] error reading local config file: %w", err)
+                }</span>
+                <span class="cov0" title="0">if err := json.Unmarshal(raw, &amp;config); err != nil </span><span class="cov0" title="0">{
+                        logger.ErrorLog.Println("[config] error unmarshaling local configs", err)
+                        return nil, fmt.Errorf("[config] error unmarshaling local configs: %w", err)
+                }</span>
+        case "test", "prod":<span class="cov0" title="0">
+                // Para ambientes contenerizados (test/prod), carga la configuración desde variables de entorno
+                config.ServerConfig.Host = os.Getenv("SERVER_HOST")
+                config.ServerConfig.Port, _ = strconv.Atoi(os.Getenv("PORT")) // PORT es el del API
+                config.ServerConfig.TLS.Enabled, _ = strconv.ParseBool(os.Getenv("TLS_ENABLED"))
+                config.ServerConfig.TLS.CertFile = os.Getenv("TLS_CERT_FILE")
+                config.ServerConfig.TLS.KeyFile = os.Getenv("TLS_KEY_FILE")
+                config.ServerConfig.CORS.Enabled, _ = strconv.ParseBool(os.Getenv("CORS_ENABLED"))
+                config.ServerConfig.CORS.AllowOrigin = os.Getenv("CORS_ALLOW_ORIGIN")
+                config.ServerConfig.CORS.AllowMethods = os.Getenv("CORS_ALLOW_METHODS")
+                config.ServerConfig.CORS.AllowHeaders = os.Getenv("CORS_ALLOW_HEADERS")
+
+                config.DatabaseConfig.Host = os.Getenv("DATABASE_HOST")
+                config.DatabaseConfig.Port, _ = strconv.Atoi(os.Getenv("DATABASE_PORT"))
+                config.DatabaseConfig.Username = os.Getenv("DATABASE_USERNAME")
+                config.DatabaseConfig.Password = os.Getenv("DATABASE_PASSWORD")
+                config.DatabaseConfig.Database = os.Getenv("DATABASE_NAME")
+                config.DatabaseConfig.SSLMode = os.Getenv("DATABASE_SSLMODE")
+                dbTimeout, _ := strconv.ParseInt(os.Getenv("DB_TIMEOUT"), 10, 64)
+                config.DatabaseConfig.DBTimeout = time.Duration(dbTimeout)
+                config.DatabaseConfig.MaxOpenConns, _ = strconv.Atoi(os.Getenv("MAX_OPEN_CONNS"))
+
+                // NUEVA Configuración para MongoDB (MongoDBConfig)
+                config.MongoDBConfig.Host = os.Getenv("MONGO_HOST")
+                config.MongoDBConfig.Port, _ = strconv.Atoi(os.Getenv("MONGO_PORT"))
+                config.MongoDBConfig.Username = os.Getenv("MONGO_USERNAME")
+                config.MongoDBConfig.Password = os.Getenv("MONGO_PASSWORD")
+                config.MongoDBConfig.Database = os.Getenv("MONGO_DATABASE")
+                config.MongoDBConfig.Collection = os.Getenv("MONGO_COLLECTION")
+                mongoDBTimeout, _ := strconv.ParseInt(os.Getenv("MONGO_DB_TIMEOUT"), 10, 64)
+                config.MongoDBConfig.DBTimeout = time.Duration(mongoDBTimeout)
+
+                config.AuthConfig.JWTSecret = os.Getenv("JWT_SECRET")
+                config.AuthConfig.JWTPrivateKey = os.Getenv("JWT_PRIVATE_KEY")
+                config.AuthConfig.JWTPublicKey = os.Getenv("JWT_PUBLIC_KEY")
+                hashCost, _ := strconv.Atoi(os.Getenv("HASH_COST"))
+                config.AuthConfig.HashCost = hashCost
+                tokenDuration, _ := strconv.ParseInt(os.Getenv("TOKEN_DURATION"), 10, 64)
+                config.AuthConfig.TokenDuration = time.Duration(tokenDuration)
+
+                // También se puede cargar MONGO_URI si la estructura de Config lo soporta,
+                // o directamente en el cliente de MongoDB si no se necesita en Config.
+                // En tu main.go ya lo manejas directamente en NewMongoClient, lo cual es correcto.
+                logger.InfoLog.Println("Cargando configuraciones desde variables de entorno.")</span>
+
+                // default:
+                //         // En caso de un scope desconocido, aún podemos intentar cargar desde variables de entorno
+                //         // o un archivo de configuración predeterminado si existe.
+                //         // Para este caso, lo trataremos como prod/test y usaremos variables de entorno.
+                //         logger.InfoLog.Println("Scope desconocido o no definido. Intentando cargar configuraciones desde variables de entorno.")
+                //         config.ServerConfig.Host = os.Getenv("SERVER_HOST")
+                //         config.ServerConfig.Port, _ = strconv.Atoi(os.Getenv("PORT"))
+                //         config.ServerConfig.TLS.Enabled, _ = strconv.ParseBool(os.Getenv("TLS_ENABLED"))
+                //         config.ServerConfig.TLS.CertFile = os.Getenv("TLS_CERT_FILE")
+                //         config.ServerConfig.TLS.KeyFile = os.Getenv("TLS_KEY_FILE")
+                //         config.ServerConfig.CORS.Enabled, _ = strconv.ParseBool(os.Getenv("CORS_ENABLED"))
+                //         config.ServerConfig.CORS.AllowOrigin = os.Getenv("CORS_ALLOW_ORIGIN")
+                //         config.ServerConfig.CORS.AllowMethods = os.Getenv("CORS_ALLOW_METHODS")
+                //         config.ServerConfig.CORS.AllowHeaders = os.Getenv("CORS_ALLOW_HEADERS")
+
+                //         config.DatabaseConfig.Host = os.Getenv("DATABASE_HOST")
+                //         config.DatabaseConfig.Port, _ = strconv.Atoi(os.Getenv("DATABASE_PORT"))
+                //         config.DatabaseConfig.Username = os.Getenv("DATABASE_USERNAME")
+                //         config.DatabaseConfig.Password = os.Getenv("DATABASE_PASSWORD")
+                //         config.DatabaseConfig.Database = os.Getenv("DATABASE_NAME")
+                //         config.DatabaseConfig.SSLMode = os.Getenv("DATABASE_SSLMODE")
+                //         dbTimeout, _ := strconv.ParseInt(os.Getenv("DB_TIMEOUT"), 10, 64)
+                //         config.DatabaseConfig.DBTimeout = time.Duration(dbTimeout)
+                //         config.DatabaseConfig.MaxOpenConns, _ = strconv.Atoi(os.Getenv("MAX_OPEN_CONNS"))
+
+                //         // NUEVA Configuración para MongoDB (MongoDBConfig)
+                //         config.MongoDBConfig.Host = os.Getenv("MONGO_HOST")
+                //         config.MongoDBConfig.Port, _ = strconv.Atoi(os.Getenv("MONGO_PORT"))
+                //         config.MongoDBConfig.Username = os.Getenv("MONGO_USERNAME")
+                //         config.MongoDBConfig.Password = os.Getenv("MONGO_PASSWORD")
+                //         config.MongoDBConfig.Database = os.Getenv("MONGO_DATABASE")
+                //         config.MongoDBConfig.Collection = os.Getenv("MONGO_COLLECTION")
+                //         mongoDBTimeout, _ := strconv.ParseInt(os.Getenv("MONGO_DB_TIMEOUT"), 10, 64)
+                //         config.MongoDBConfig.DBTimeout = time.Duration(mongoDBTimeout)
+
+                //         config.AuthConfig.JWTSecret = os.Getenv("JWT_SECRET")
+                //         config.AuthConfig.JWTPrivateKey = os.Getenv("JWT_PRIVATE_KEY")
+                //         config.AuthConfig.JWTPublicKey = os.Getenv("JWT_PUBLIC_KEY")
+                //         hashCost, _ := strconv.Atoi(os.Getenv("HASH_COST"))
+                //         config.AuthConfig.HashCost = hashCost
+                //         tokenDuration, _ := strconv.ParseInt(os.Getenv("TOKEN_DURATION"), 10, 64)
+                //         config.AuthConfig.TokenDuration = time.Duration(tokenDuration)
+        }
+
+        // if err != nil {
+        //         logger.ErrorLog.Println("[config] error reading config file", err)
+        //         // log.Error(context.Background(), "[config] error reading falcox configs", err)
+        //         return nil, err
+        // }
+
+        // var tmpConfigs Config
+        // // if err := json.Unmarshal(raw, &amp;tmpConfigs); err != nil {
+        // if err := json.Unmarshal(raw, &amp;config); err != nil {
+        //         logger.ErrorLog.Println("[config] error unmarshaling configs", err)
+        //         return nil, err
+        // }
+
+        // Secrets
+        // if scopes.GetTypeScope() == "local" {
+        //         appConfig = tmpConfigs
+        //         // os.Setenv("TRIN_USER", tmpConfigs.UebaConfig.Ueba_user)
+        //         // os.Setenv("TRIN_PASSWORD", tmpConfigs.UebaConfig.Ueba_password)
+        // } else {
+        //         fmt.Println("Otra config HTTP params")
+        // }
+
+        <span class="cov0" title="0">appConfig = config // Asigna la configuración cargada a la variable global
+
+        logger.InfoLog.Println("[config] Configs loaded successfully")
+
+        return &amp;appConfig, nil</span>
+}
+
+// Funciones de acceso a la configuración
+
+func GetServerConfig() ServerConfig <span class="cov0" title="0">{
+        return appConfig.ServerConfig
+}</span>
+
+func GetDatabaseConfig() DatabaseConfig <span class="cov0" title="0">{
+        return appConfig.DatabaseConfig
+}</span>
+
+func GetMongoDBConfig() MongoDBConfig <span class="cov0" title="0">{
+        return appConfig.MongoDBConfig
+}</span>
+
+func GetAuthConfig() AuthConfig <span class="cov0" title="0">{
+        return appConfig.AuthConfig
+}</span>
+</pre>
+		
+		<pre class="file" id="file8" style="display: none">package middleware
+
+import (
+        "cloudtrail-enrichment-api-golang/internal/pkg/logger"
+        "cloudtrail-enrichment-api-golang/internal/pkg/token" // Importa el paquete token
+        "cloudtrail-enrichment-api-golang/internal/pkg/utils"
+        "cloudtrail-enrichment-api-golang/services" // Importa el paquete services
+        "context"                                   // Importa context
+        "net/http"
+)
+
+// Middleware contiene las dependencias para los middlewares.
+type Middleware struct {
+        JWTService  *token.JWTService    // CAMBIO: Ahora es *token.JWTService
+        AuthService services.AuthService // Añade la dependencia del AuthService
+}
+
+// NewMiddleware crea una nueva instancia de Middleware.
+// CAMBIO: Recibe *token.JWTService en lugar de *token.JWTToken
+func NewMiddleware(jwtService *token.JWTService, authService services.AuthService) *Middleware <span class="cov8" title="1">{
+        return &amp;Middleware{
+                JWTService:  jwtService,  // CAMBIO: Asigna jwtService
+                AuthService: authService, // Asigna el servicio de autenticación
+        }
+}</span>
+
+// AuthTokenMiddleware es un middleware que valida el token JWT de la solicitud.
+func (mw *Middleware) AuthTokenMiddleware(next http.Handler) http.Handler <span class="cov8" title="1">{
+        return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) </span><span class="cov8" title="1">{
+                logger.InfoLog.Println("Ejecutando AuthTokenMiddleware...")
+
+                // CAMBIO: Llama al método de JWTService
+                tokenString, err := mw.JWTService.ExtractJWTToken(r)
+                if err != nil </span><span class="cov8" title="1">{
+                        payload := utils.JSONResponse{
+                                Error:   true,
+                                Message: "Token no proporcionado o formato inválido: " + err.Error(),
+                        }
+                        logger.ErrorLog.Printf("Error al extraer token: %v", err)
+                        utils.WriteJSON(w, http.StatusUnauthorized, payload)
+                        return
+                }</span>
+
+                // Llama al servicio de autenticación para validar el token y verificar el usuario
+                // El servicio de autenticación a su vez usará JWTService.ValidJWTToken
+                <span class="cov8" title="1">userClaims, err := mw.AuthService.ValidateTokenForMiddleware(r.Context(), tokenString)
+                if err != nil </span><span class="cov8" title="1">{
+                        payload := utils.JSONResponse{
+                                Error:   true,
+                                Message: "Autenticación fallida: " + err.Error(),
+                        }
+                        logger.ErrorLog.Printf("Validación de token fallida: %v", err)
+                        utils.WriteJSON(w, http.StatusUnauthorized, payload)
+                        return
+                }</span>
+
+                // Opcional: Puedes añadir los claims del usuario al contexto de la solicitud
+                // para que los handlers posteriores puedan acceder a ellos.
+                <span class="cov8" title="1">ctx := context.WithValue(r.Context(), "userClaims", userClaims)
+                next.ServeHTTP(w, r.WithContext(ctx))</span>
+        })
+}
+</pre>
+		
+		<pre class="file" id="file9" style="display: none">package logger
+
+import (
+        "log"
+        "os"
+)
+
+// ROVERT
+// infoLog := log.New(os.Stdout, "INFO\t", log.Ldate|log.Ltime)
+// errorLog := log.New(os.Stdout, "ERROR\t", log.Ldate|log.Ltime|log.Lshortfile)
+
+var (
+        InfoLog  *log.Logger
+        ErrorLog *log.Logger
+        DebugLog *log.Logger
+)
+
+//Las interfaces son variables, complementar.
+
+func Init() <span class="cov8" title="1">{
+        InfoLog = log.New(os.Stdout, "INFO\t", log.Ldate|log.Ltime)
+        ErrorLog = log.New(os.Stdout, "ERROR\t", log.Ldate|log.Ltime|log.Lshortfile)
+        DebugLog = log.New(os.Stdout, "DEBUG\t", log.Ldate|log.Ltime|log.Lshortfile) // Oportunity
+}</span>
+</pre>
+		
+		<pre class="file" id="file10" style="display: none">package scopes
+
+import (
+        "os"
+        "strings"
+)
+
+func GetTypeScope() string <span class="cov0" title="0">{
+
+        scope := os.Getenv("SCOPE")
+        switch </span>{
+        case strings.Contains(scope, "local"):<span class="cov0" title="0">
+                return "local"</span>
+        case strings.Contains(scope, "test"):<span class="cov0" title="0">
+                return "test"</span>
+        case strings.Contains(scope, "prod"):<span class="cov0" title="0">
+                return "prod"</span>
+        default:<span class="cov0" title="0">
+                return "unknown"</span>
+        }
+}
+</pre>
+		
+		<pre class="file" id="file11" style="display: none">package token
+
+import (
+        "cloudtrail-enrichment-api-golang/internal/config"
+        "cloudtrail-enrichment-api-golang/internal/pkg/logger" // Importar logger
+        "cloudtrail-enrichment-api-golang/models"
+        "context"
+        "crypto/sha256" // Importar para SHA256
+        "errors"
+        "fmt"
+        "net/http"
+        "strings"
+        "time"
+
+        "github.com/golang-jwt/jwt/v5"
+)
+
+// User representa la información del usuario contenida en el token JWT.
+type User struct {
+        ID    int    `json:"id"`
+        Email string `json:"email"`
+        Role  string `json:"role"`
+}
+
+// JWTToken representa la estructura del token JWT que se serializará en el payload.
+// Este struct NO DEBE CONTENER DEPENDENCIAS como Config o TokenRepository.
+type JWTToken struct {
+        UserID    int       `json:"user_id,omitempty"`
+        Email     string    `json:"email,omitempty"`
+        Token     string    `json:"token"`
+        TokenHash string    `json:"token_hash"`
+        Expiry    time.Time `json:"expiry"`
+        Role      string    `json:"role,omitempty"`
+        jwt.RegisteredClaims
+        CreatedAt time.Time `json:"created_at"`
+        UpdatedAt time.Time `json:"updated_at"`
+}
+
+// TokenDBRepository es una interfaz para las operaciones de persistencia del token.
+// Se define aquí para que el paquete token no tenga una dependencia directa al paquete repository.
+type TokenDBRepository interface {
+        InsertToken(ctx context.Context, token *models.Token) error
+        GetTokenByTokenHash(ctx context.Context, tokenHash string) (*models.Token, error)
+        DeleteTokensByUserID(ctx context.Context, userID int) error
+        GetTokenByToken(ctx context.Context, tokenString string) (*models.Token, error) // Método nuevo para obtener por token directamente
+        GetUserForToken(ctx context.Context, userID int) (*models.User, error)          // Método para obtener usuario por ID
+}
+
+// JWTService es el struct que contendrá las dependencias
+// y los métodos de negocio relacionados con los tokens JWT.
+type JWTService struct {
+        Config          *config.Config
+        TokenRepository TokenDBRepository
+}
+
+// NewJWTService crea una nueva instancia del servicio de token JWT.
+func NewJWTService(cfg *config.Config, tokenRepo TokenDBRepository) *JWTService <span class="cov8" title="1">{
+        return &amp;JWTService{
+                Config:          cfg,
+                TokenRepository: tokenRepo,
+        }
+}</span>
+
+// GetByToken toma un token en texto plano y busca el token completo en la base de datos.
+// Devuelve un puntero al modelo Token.
+func (j *JWTService) GetByToken(ctx context.Context, plainText string) (*models.Token, error) <span class="cov8" title="1">{
+        dbTimeout := j.Config.DatabaseConfig.DBTimeout
+        ctx, cancel := context.WithTimeout(ctx, dbTimeout)
+        defer cancel()
+
+        token, err := j.TokenRepository.GetTokenByToken(ctx, plainText)
+        if err != nil </span><span class="cov0" title="0">{
+                logger.ErrorLog.Printf("Error al obtener token por valor en DB: %v", err)
+                return nil, err
+        }</span>
+        <span class="cov8" title="1">return token, nil</span>
+}
+
+// GetUserForToken obtiene un usuario de la base de datos dado un token persistido.
+func (j *JWTService) GetUserForToken(ctx context.Context, token models.Token) (*models.User, error) <span class="cov8" title="1">{
+        dbTimeout := j.Config.DatabaseConfig.DBTimeout
+        ctx, cancel := context.WithTimeout(ctx, dbTimeout)
+        defer cancel()
+
+        user, err := j.TokenRepository.GetUserForToken(ctx, token.UserID)
+        if err != nil </span><span class="cov0" title="0">{
+                logger.ErrorLog.Printf("Error al obtener usuario para el token en DB: %v", err)
+                return nil, err
+        }</span>
+        <span class="cov8" title="1">return user, nil</span>
+}
+
+// InsertJWT inserta un nuevo token JWT en la base de datos, revocando los anteriores para el mismo usuario.
+func (j *JWTService) InsertJWT(ctx context.Context, tokenData models.Token, user models.User) error <span class="cov8" title="1">{
+        dbTimeout := j.Config.DatabaseConfig.DBTimeout
+        fmt.Println("DB TIMEOUT", dbTimeout)
+        ctx, cancel := context.WithTimeout(ctx, dbTimeout)
+        defer cancel()
+
+        // Eliminar cualquier token existente para este usuario
+        err := j.TokenRepository.DeleteTokensByUserID(ctx, tokenData.UserID)
+        if err != nil </span><span class="cov0" title="0">{
+                logger.ErrorLog.Printf("Error al eliminar tokens existentes para el usuario %d: %v", tokenData.UserID, err)
+                return err
+        }</span>
+
+        // Asignar el email del usuario al token
+        <span class="cov8" title="1">tokenData.Email = user.Email
+        tokenData.Role = user.Role
+
+        // Insertar el nuevo token
+        err = j.TokenRepository.InsertToken(ctx, &amp;tokenData)
+        if err != nil </span><span class="cov0" title="0">{
+                logger.ErrorLog.Printf("Error al insertar el nuevo token para el usuario %d: %v", tokenData.UserID, err)
+                return err
+        }</span>
+
+        <span class="cov8" title="1">return nil</span>
+}
+
+// DeleteByJWTToken elimina un token de la base de datos dado su valor en texto plano.
+func (j *JWTService) DeleteByJWTToken(ctx context.Context, plainText string) error <span class="cov8" title="1">{
+        dbTimeout := j.Config.DatabaseConfig.DBTimeout
+        ctx, cancel := context.WithTimeout(ctx, dbTimeout)
+        defer cancel()
+
+        tokenToDelete, err := j.TokenRepository.GetTokenByToken(ctx, plainText)
+        if err != nil </span><span class="cov0" title="0">{
+                logger.ErrorLog.Printf("Token a eliminar no encontrado: %v", err)
+                return errors.New("token a eliminar no encontrado")
+        }</span>
+
+        <span class="cov8" title="1">err = j.TokenRepository.DeleteTokensByUserID(ctx, tokenToDelete.UserID)
+        if err != nil </span><span class="cov0" title="0">{
+                logger.ErrorLog.Printf("Error al eliminar token por texto plano para el usuario %d: %v", tokenToDelete.UserID, err)
+                return err
+        }</span>
+
+        <span class="cov8" title="1">return nil</span>
+}
+
+// GenerateJWTToken genera un nuevo token JWT para un usuario dado y lo persiste.
+func (j *JWTService) GenerateJWTToken(ctx context.Context, userID int, email string, role string) (string, time.Time, error) <span class="cov8" title="1">{
+        expiry := time.Now().Add(j.Config.AuthConfig.TokenDuration)
+
+        // Aquí usamos JWTToken solo para los claims que se serializarán.
+        claims := &amp;JWTToken{
+                UserID: userID,
+                Email:  email,
+                Role:   role,
+                Expiry: expiry,
+                RegisteredClaims: jwt.RegisteredClaims{
+                        Subject:   email,
+                        ExpiresAt: jwt.NewNumericDate(expiry),
+                        IssuedAt:  jwt.NewNumericDate(time.Now()),
+                        NotBefore: jwt.NewNumericDate(time.Now()),
+                        Issuer:    "g3notype",
+                        Audience:  []string{"mis-usuarios"},
+                },
+        }
+
+        token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+        secretkey := j.Config.AuthConfig.JWTSecret
+        if secretkey == "" </span><span class="cov8" title="1">{
+                return "", time.Time{}, errors.New("clave secreta JWT no configurada")
+        }</span>
+
+        <span class="cov8" title="1">signedToken, err := token.SignedString([]byte(secretkey))
+        if err != nil </span><span class="cov0" title="0">{
+                logger.ErrorLog.Printf("Error al firmar el token JWT: %v", err)
+                return "", time.Time{}, err
+        }</span>
+
+        <span class="cov8" title="1">tokenHash := sha256.Sum256([]byte(signedToken))
+        tokenHashString := fmt.Sprintf("%x", tokenHash)
+
+        dbToken := models.Token{
+                UserID:    userID,
+                Email:     email,
+                Token:     signedToken,
+                TokenHash: tokenHashString,
+                Expiry:    expiry,
+                Role:      role,
+                CreatedAt: time.Now(),
+                UpdatedAt: time.Now(),
+        }
+
+        err = j.InsertJWT(ctx, dbToken, models.User{ID: userID, Email: email, Role: role})
+        if err != nil </span><span class="cov0" title="0">{
+                logger.ErrorLog.Printf("Error al persistir el token en la DB para el usuario %s: %v", email, err)
+                return "", time.Time{}, fmt.Errorf("error al persistir el token: %w", err)
+        }</span>
+
+        <span class="cov8" title="1">return signedToken, expiry, nil</span>
+}
+
+// ExtractJWTToken extrae el token JWT del encabezado Authorization.
+func (j *JWTService) ExtractJWTToken(r *http.Request) (string, error) <span class="cov8" title="1">{
+        authorizationHeader := r.Header.Get("Authorization")
+        if authorizationHeader == "" </span><span class="cov0" title="0">{
+                return "", errors.New("encabezado de autorización no proporcionado")
+        }</span>
+
+        <span class="cov8" title="1">headerParts := strings.Split(authorizationHeader, " ")
+        if len(headerParts) != 2 || headerParts[0] != "Bearer" </span><span class="cov8" title="1">{
+                return "", errors.New("formato de token inválido")
+        }</span>
+
+        <span class="cov8" title="1">tokenString := headerParts[1]
+        return tokenString, nil</span>
+}
+
+// ValidJWTToken valida el token JWT y devuelve la información del usuario,
+// además de verificar su existencia en la base de datos.
+func (j *JWTService) ValidJWTToken(ctx context.Context, tokenString string) (*User, error) <span class="cov8" title="1">{
+        secretkey := j.Config.AuthConfig.JWTSecret
+        if secretkey == "" </span><span class="cov0" title="0">{
+                return nil, errors.New("clave secreta JWT no configurada")
+        }</span>
+
+        <span class="cov8" title="1">token, err := jwt.ParseWithClaims(tokenString, &amp;JWTToken{}, func(token *jwt.Token) (interface{}, error) </span><span class="cov8" title="1">{
+                if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok </span><span class="cov0" title="0">{
+                        return nil, fmt.Errorf("método de firma inesperado: %v", token.Header["alg"])
+                }</span>
+                <span class="cov8" title="1">return []byte(secretkey), nil</span>
+        })
+
+        <span class="cov8" title="1">if err != nil </span><span class="cov8" title="1">{
+                logger.ErrorLog.Printf("Error al parsear o validar token JWT: %v", err)
+                return nil, fmt.Errorf("token inválido o expirado: %w", err)
+        }</span>
+
+        <span class="cov8" title="1">claims, ok := token.Claims.(*JWTToken)
+        if !ok || !token.Valid </span><span class="cov0" title="0">{
+                logger.ErrorLog.Println("Claims de token JWT inválidos o token no válido.")
+                return nil, errors.New("token inválido")
+        }</span>
+
+        <span class="cov8" title="1">if time.Now().After(claims.Expiry) </span><span class="cov0" title="0">{
+                logger.InfoLog.Printf("Token expirado para el usuario: %s", claims.Email)
+                return nil, errors.New("token expirado")
+        }</span>
+
+        <span class="cov8" title="1">tokenHash := sha256.Sum256([]byte(tokenString))
+        tokenHashString := fmt.Sprintf("%x", tokenHash)
+
+        persistedToken, err := j.TokenRepository.GetTokenByTokenHash(ctx, tokenHashString)
+        if err != nil </span><span class="cov8" title="1">{
+                logger.ErrorLog.Printf("Error al buscar el token en la base de datos por hash: %v", err)
+                return nil, errors.New("token no encontrado o revocado")
+        }</span>
+
+        <span class="cov8" title="1">if persistedToken.UserID != claims.UserID || persistedToken.Email != claims.Email || persistedToken.Role != claims.Role || time.Now().After(persistedToken.Expiry) </span><span class="cov0" title="0">{
+                logger.ErrorLog.Printf("Inconsistencia en el token persistido o token expirado en DB para usuario: %s", claims.Email)
+                return nil, errors.New("token inválido o revocado")
+        }</span>
+
+        <span class="cov8" title="1">return &amp;User{
+                ID:    claims.UserID,
+                Email: claims.Email,
+                Role:  claims.Role,
+        }, nil</span>
+}
+
+// AuthenticateJWTToken extrae y valida el token JWT de la solicitud.
+func (j *JWTService) AuthenticateJWTToken(r *http.Request) (*User, error) <span class="cov0" title="0">{
+        tokenString, err := j.ExtractJWTToken(r)
+        if err != nil </span><span class="cov0" title="0">{
+                return nil, err
+        }</span>
+
+        <span class="cov0" title="0">user, err := j.ValidJWTToken(r.Context(), tokenString)
+        if err != nil </span><span class="cov0" title="0">{
+                return nil, err
+        }</span>
+
+        <span class="cov0" title="0">return user, nil</span>
+}
+</pre>
+		
+		<pre class="file" id="file12" style="display: none">package utils
+
+import (
+        "cloudtrail-enrichment-api-golang/internal/pkg/logger" // Importa el logger
+        "encoding/json"
+        "errors"
+        "io"
+        "net/http"
+        "strings"
+)
+
+// jsonResponse es una estructura auxiliar para enviar respuestas JSON.
+type JSONResponse struct {
+        Error   bool        `json:"error"`
+        Message string      `json:"message"`
+        Data    interface{} `json:"data,omitempty"`
+}
+
+// ReadJSON lee el cuerpo de una solicitud HTTP y lo decodifica en la estructura de datos proporcionada.
+func ReadJSON(w http.ResponseWriter, r *http.Request, data interface{}) error <span class="cov8" title="1">{
+        maxBytes := 1048576 // 1 MB
+        r.Body = http.MaxBytesReader(w, r.Body, int64(maxBytes))
+
+        dec := json.NewDecoder(r.Body)
+        if err := dec.Decode(data); err != nil </span><span class="cov8" title="1">{
+                return err
+        }</span>
+
+        <span class="cov8" title="1">if err := dec.Decode(&amp;struct{}{}); err != io.EOF </span><span class="cov8" title="1">{
+                return errors.New("body must have only a single JSON value")
+        }</span>
+
+        <span class="cov8" title="1">return nil</span>
+}
+
+// WriteJSON escribe una respuesta JSON al cliente.
+func WriteJSON(w http.ResponseWriter, status int, data interface{}, headers ...http.Header) error <span class="cov8" title="1">{
+        out, err := json.Marshal(data)
+        if err != nil </span><span class="cov0" title="0">{
+                logger.ErrorLog.Printf("Error al serializar JSON: %v", err)
+                return err
+        }</span>
+
+        <span class="cov8" title="1">if len(headers) &gt; 0 </span><span class="cov0" title="0">{
+                for key, value := range headers[0] </span><span class="cov0" title="0">{
+                        w.Header()[key] = value
+                }</span>
+        }
+
+        <span class="cov8" title="1">w.Header().Set("Content-Type", "application/json")
+        w.WriteHeader(status)
+        _, err = w.Write(out)
+        if err != nil </span><span class="cov0" title="0">{
+                logger.ErrorLog.Printf("Error al escribir respuesta JSON: %v", err)
+                return err
+        }</span>
+
+        <span class="cov8" title="1">return nil</span>
+}
+
+// ErrorJSON envía un error como respuesta JSON.
+func ErrorJSON(w http.ResponseWriter, err error, status ...int) <span class="cov8" title="1">{
+        statusCode := http.StatusBadRequest
+
+        if len(status) &gt; 0 </span><span class="cov0" title="0">{
+                statusCode = status[0]
+        }</span>
+
+        <span class="cov8" title="1">var customErr error
+
+        switch </span>{
+        case strings.Contains(err.Error(), "SQLSTATE 23505"):<span class="cov8" title="1">
+                customErr = errors.New("valor duplicado viola la restricción única")
+                statusCode = http.StatusConflict</span> // 409 Conflict es más apropiado para duplicados
+        case strings.Contains(err.Error(), "SQLSTATE 22001"):<span class="cov0" title="0">
+                customErr = errors.New("el valor que intenta insertar es demasiado grande")
+                statusCode = http.StatusRequestEntityTooLarge</span> // 413 Payload Too Large
+        case strings.Contains(err.Error(), "SQLSTATE 23403"):<span class="cov0" title="0">
+                customErr = errors.New("violación de clave foránea")
+                statusCode = http.StatusConflict</span>
+        case errors.Is(err, io.EOF):<span class="cov8" title="1"> // Manejo específico para EOF cuando el cuerpo está vacío
+                customErr = errors.New("cuerpo de la solicitud vacío")
+                statusCode = http.StatusBadRequest</span>
+        case strings.Contains(err.Error(), "invalid character"):<span class="cov8" title="1"> // Manejo de JSON inválido
+                customErr = errors.New("formato JSON inválido")
+                statusCode = http.StatusBadRequest</span>
+        default:<span class="cov8" title="1">
+                customErr = err</span>
+        }
+
+        <span class="cov8" title="1">payload := JSONResponse{
+                Error:   true,
+                Message: customErr.Error(),
+        }
+
+        WriteJSON(w, statusCode, payload)</span> // Usar la función WriteJSON
+}
+</pre>
+		
+		<pre class="file" id="file13" style="display: none">package repository
+
+import (
+        "cloudtrail-enrichment-api-golang/models"
+        "context"
+)
+
+// AuthRepository define la interfaz para las operaciones relacionadas con la autenticación
+// y ahora también para la gestión de tokens.
+type AuthRepository interface {
+        InsertUser(ctx context.Context, user *models.User) error
+        GetUserByEmail(ctx context.Context, email string) (*models.User, error)
+        GetUserByUUID(ctx context.Context, uuid string) (*models.User, error)
+
+        // Métodos para la gestión de tokens
+        InsertToken(ctx context.Context, token *models.Token) error
+        GetTokenByTokenHash(ctx context.Context, tokenHash string) (*models.Token, error)
+        DeleteTokensByUserID(ctx context.Context, userID int) error
+        GetTokenByToken(ctx context.Context, tokenString string) (*models.Token, error)
+        GetUserForToken(ctx context.Context, userID int) (*models.User, error) // Método para obtener usuario por ID
+}
+
+var AuthRepo AuthRepository
+
+func SetAuthRepository(repo AuthRepository) <span class="cov8" title="1">{
+        AuthRepo = repo
+}</span>
+
+func InsertUser(ctx context.Context, user *models.User) error <span class="cov8" title="1">{
+        return AuthRepo.InsertUser(ctx, user)
+}</span>
+
+func GetUserByEmail(ctx context.Context, email string) (*models.User, error) <span class="cov8" title="1">{
+        return AuthRepo.GetUserByEmail(ctx, email)
+}</span>
+
+func GetUserByUUID(ctx context.Context, uuid string) (*models.User, error) <span class="cov8" title="1">{
+        return AuthRepo.GetUserByUUID(ctx, uuid)
+}</span>
+
+// Nuevas funciones para tokens
+func InsertToken(ctx context.Context, token *models.Token) error <span class="cov8" title="1">{
+        return AuthRepo.InsertToken(ctx, token)
+}</span>
+
+func GetTokenByTokenHash(ctx context.Context, tokenHash string) (*models.Token, error) <span class="cov8" title="1">{
+        return AuthRepo.GetTokenByTokenHash(ctx, tokenHash)
+}</span>
+
+func DeleteTokensByUserID(ctx context.Context, userID int) error <span class="cov8" title="1">{
+        return AuthRepo.DeleteTokensByUserID(ctx, userID)
+}</span>
+
+func GetTokenByToken(ctx context.Context, tokenString string) (*models.Token, error) <span class="cov8" title="1">{
+        return AuthRepo.GetTokenByToken(ctx, tokenString)
+}</span>
+
+func GetUserForToken(ctx context.Context, userID int) (*models.User, error) <span class="cov8" title="1">{
+        return AuthRepo.GetUserForToken(ctx, userID)
+}</span>
+</pre>
+		
+		<pre class="file" id="file14" style="display: none">package repository
+
+import (
+        "cloudtrail-enrichment-api-golang/models"
+        "context"
+)
+
+type EnrichmentRepository interface {
+        InsertLog(ctx context.Context, event *models.EnrichedEventRecord) error
+        GetLatestLogs(ctx context.Context) ([]*models.EnrichedEventRecord, error)
+}
+
+// Declaramos una variable global para la instancia del repositorio de enriquecimiento.
+var EnrichmentRepo EnrichmentRepository
+
+// SetEnrichmentRepository permite inyectar una implementación de EnrichmentRepository.
+func SetEnrichmentRepository(repo EnrichmentRepository) <span class="cov8" title="1">{
+        EnrichmentRepo = repo
+}</span>
+
+// InsertLog es una función auxiliar que llama al método InsertLog de la implementación actual.
+func InsertLog(ctx context.Context, log *models.EnrichedEventRecord) error <span class="cov8" title="1">{
+        return EnrichmentRepo.InsertLog(ctx, log)
+}</span>
+
+// GetLatestLogs es una función auxiliar que llama al método GetLatestLogs de la implementación actual.
+// POR QUE EL ERROR ESTA ADENTRO?
+func GetLatestLogs(ctx context.Context) ([]*models.EnrichedEventRecord, error) <span class="cov8" title="1">{
+        return EnrichmentRepo.GetLatestLogs(ctx)
+}</span>
+</pre>
+		
+		<pre class="file" id="file15" style="display: none">package services
+
+import (
+        "cloudtrail-enrichment-api-golang/internal/pkg/logger"
+        "cloudtrail-enrichment-api-golang/internal/pkg/token" // Importa el paquete token
+        "cloudtrail-enrichment-api-golang/internal/repository"
+        "cloudtrail-enrichment-api-golang/models"
+        "context"
+        "database/sql"
+        "errors"
+        "fmt"
+
+        "github.com/google/uuid"
+        "golang.org/x/crypto/bcrypt" // Para hashing de contraseñas
+)
+
+// AuthService define la interfaz para las operaciones de servicio de autenticación.
+type AuthService interface {
+        RegisterUser(ctx context.Context, payload *models.RegisterPayload) (*models.User, error)
+        // CAMBIO: El segundo retorno de AuthenticateUser ahora es *token.JWTToken (solo claims)
+        AuthenticateUser(ctx context.Context, email, password string) (*models.User, *token.JWTToken, error)
+        ValidateTokenForMiddleware(ctx context.Context, tokenString string) (*token.User, error)
+}
+
+// DefaultAuthService es la implementación predeterminada de AuthService.
+type DefaultAuthService struct {
+        repo       repository.AuthRepository
+        jwtService *token.JWTService // CAMBIO: Ahora inyectamos *token.JWTService
+}
+
+// NewAuthService crea una nueva instancia de DefaultAuthService.
+// CAMBIO: Recibe *token.JWTService en lugar de *token.JWTToken
+func NewAuthService(repo repository.AuthRepository, jwtService *token.JWTService) *DefaultAuthService <span class="cov8" title="1">{
+        return &amp;DefaultAuthService{
+                repo:       repo,
+                jwtService: jwtService, // CAMBIO: Asigna jwtService
+        }
+}</span>
+
+// RegisterUser registra un nuevo usuario en el sistema.
+func (s *DefaultAuthService) RegisterUser(ctx context.Context, payload *models.RegisterPayload) (*models.User, error) <span class="cov8" title="1">{
+        // Verificar si el usuario ya existe por email
+        _, err := s.repo.GetUserByEmail(ctx, payload.Email)
+        if err == nil </span><span class="cov0" title="0">{
+                logger.InfoLog.Printf("Intento de registro con email duplicado: %s", payload.Email)
+                return nil, errors.New("el email ya está registrado")
+        }</span>
+        <span class="cov8" title="1">if err != nil &amp;&amp; err != sql.ErrNoRows </span><span class="cov0" title="0">{
+                logger.ErrorLog.Printf("Error al verificar email existente: %v", err)
+                return nil, fmt.Errorf("error al verificar email: %w", err)
+        }</span>
+
+        // Hashear la contraseña
+        <span class="cov8" title="1">hashedPassword, err := bcrypt.GenerateFromPassword([]byte(payload.Password), bcrypt.DefaultCost)
+        if err != nil </span><span class="cov0" title="0">{
+                logger.ErrorLog.Printf("Error al hashear la contraseña: %v", err)
+                return nil, fmt.Errorf("error al procesar contraseña: %w", err)
+        }</span>
+
+        <span class="cov8" title="1">newUser := &amp;models.User{
+                UUID:         uuid.NewString(),
+                Email:        payload.Email,
+                PasswordHash: string(hashedPassword),
+                Role:         payload.Role, // Asegúrate de validar o asignar un rol por defecto
+        }
+
+        err = s.repo.InsertUser(ctx, newUser)
+        if err != nil </span><span class="cov0" title="0">{
+                logger.ErrorLog.Printf("Error en el servicio al insertar nuevo usuario: %v", err)
+                return nil, fmt.Errorf("error al registrar usuario: %w", err)
+        }</span>
+
+        <span class="cov8" title="1">logger.InfoLog.Printf("Usuario %s registrado exitosamente con UUID: %s", newUser.Email, newUser.UUID)
+        return newUser, nil</span>
+}
+
+// AuthenticateUser autentica a un usuario y genera un token JWT.
+// CAMBIO: El segundo retorno ahora es *token.JWTToken (solo claims)
+func (s *DefaultAuthService) AuthenticateUser(ctx context.Context, email, password string) (*models.User, *token.JWTToken, error) <span class="cov8" title="1">{
+        user, err := s.repo.GetUserByEmail(ctx, email)
+        if err != nil </span><span class="cov0" title="0">{
+                if err == sql.ErrNoRows </span><span class="cov0" title="0">{
+                        logger.InfoLog.Printf("Intento de autenticación fallido: usuario no encontrado con email %s", email)
+                        return nil, nil, errors.New("credenciales inválidas")
+                }</span>
+                <span class="cov0" title="0">logger.ErrorLog.Printf("Error al obtener usuario por email %s para autenticar: %v", email, err)
+                return nil, nil, fmt.Errorf("error al autenticar: %w", err)</span>
+        }
+
+        // Comparar la contraseña hasheada
+        <span class="cov8" title="1">err = bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(password))
+        if err != nil </span><span class="cov8" title="1">{
+                logger.InfoLog.Printf("Intento de autenticación fallido para %s: contraseña incorrecta", email)
+                return nil, nil, errors.New("credenciales inválidas")
+        }</span>
+
+        // Generar el token JWT. La lógica de persistencia y revocación de tokens anteriores
+        // ahora está dentro de GenerateJWTToken en el paquete token.
+        // CAMBIO: Llamamos a GenerateJWTToken del jwtService
+        <span class="cov8" title="1">signedToken, expiry, err := s.jwtService.GenerateJWTToken(ctx, user.ID, user.Email, user.Role)
+        if err != nil </span><span class="cov0" title="0">{
+                logger.ErrorLog.Printf("Error al generar JWT para usuario %s: %v", user.Email, err)
+                return nil, nil, fmt.Errorf("error al generar token: %w", err)
+        }</span>
+
+        // Creamos un JWTToken simple con los datos para la respuesta, sin las dependencias.
+        <span class="cov8" title="1">jwtData := &amp;token.JWTToken{
+                UserID: user.ID,
+                Email:  user.Email,
+                Token:  signedToken,
+                Expiry: expiry,
+                Role:   user.Role,
+        }
+
+        logger.InfoLog.Printf("Usuario %s autenticado y token generado.", user.Email)
+        return user, jwtData, nil</span>
+}
+
+// ValidateTokenForMiddleware valida un token JWT y verifica la existencia del usuario y la validez del token en la DB.
+// Este método es invocado por el middleware.
+func (s *DefaultAuthService) ValidateTokenForMiddleware(ctx context.Context, tokenString string) (*token.User, error) <span class="cov0" title="0">{
+        // Validar el token usando la lógica del paquete token
+        // CAMBIO: Llamamos a ValidJWTToken del jwtService
+        jwtClaims, err := s.jwtService.ValidJWTToken(ctx, tokenString) // Pasa el contexto
+        if err != nil </span><span class="cov0" title="0">{
+                logger.ErrorLog.Printf("Token JWT inválido, expirado o no encontrado en DB: %v", err)
+                return nil, fmt.Errorf("token inválido: %w", err)
+        }</span>
+
+        // Opcional pero recomendado: Verificar que el usuario del token realmente existe en nuestra DB.
+        // Esto es útil si los usuarios pueden ser eliminados o deshabilitados después de generar un token.
+        <span class="cov0" title="0">_, err = s.repo.GetUserByEmail(ctx, jwtClaims.Email)
+        if err != nil </span><span class="cov0" title="0">{
+                if err == sql.ErrNoRows </span><span class="cov0" title="0">{
+                        logger.ErrorLog.Printf("Usuario asociado al token (%s) no encontrado en la DB.", jwtClaims.Email)
+                        return nil, errors.New("usuario asociado al token no encontrado")
+                }</span>
+                <span class="cov0" title="0">logger.ErrorLog.Printf("Error al verificar usuario de token en DB: %v", err)
+                return nil, fmt.Errorf("error de verificación de usuario: %w", err)</span>
+        }
+
+        <span class="cov0" title="0">logger.InfoLog.Printf("Token JWT validado exitosamente para usuario: %s", jwtClaims.Email)
+        return jwtClaims, nil</span>
+}
+</pre>
+		
+		<pre class="file" id="file16" style="display: none">package services
+
+import (
+        "cloudtrail-enrichment-api-golang/internal/pkg/logger"
+        "cloudtrail-enrichment-api-golang/internal/repository"
+        "cloudtrail-enrichment-api-golang/models"
+        "context"
+        "encoding/json"
+        "fmt"
+        "io/ioutil"
+        "net/http"
+)
+
+type EnrichmentService interface {
+        // Modificamos la firma de EnrichEvent:
+        // Ahora recibe *models.Event (la entrada completa de CloudTrail)
+        // y devuelve una slice de *models.EnrichedEventRecord (los registros procesados) y un error.
+        EnrichEvent(ctx context.Context, event *models.Event) ([]*models.EnrichedEventRecord, error)
+        Top10QueryEvents(ctx context.Context) ([]*models.EnrichedEventRecord, error)
+}
+
+type DefaultEnrichmentService struct {
+        repo repository.EnrichmentRepository
+}
+
+func NewDefaultEnrichmentService(repo repository.EnrichmentRepository) *DefaultEnrichmentService <span class="cov8" title="1">{
+        return &amp;DefaultEnrichmentService{
+                repo: repo,
+        }
+}</span>
+
+// Implementación de EnrichEvent para DefaultEnrichmentService
+// Coincide con la nueva firma de la interfaz.
+func (s *DefaultEnrichmentService) EnrichEvent(ctx context.Context, event *models.Event) ([]*models.EnrichedEventRecord, error) <span class="cov8" title="1">{
+        var enrichedRecords []*models.EnrichedEventRecord // Cambiamos a slice de punteros para consistencia y eficiencia
+
+        // Iterar sobre cada record en el evento de entrada
+        for i, record := range event.Records </span><span class="cov8" title="1">{
+                sourceIP := record.SourceIPAddress
+                if sourceIP == "" </span><span class="cov0" title="0">{
+                        logger.ErrorLog.Printf("El campo 'sourceIPAddress' está vacío en el registro %d. Saltando enriquecimiento para este registro.", i)
+                        continue</span> // Saltamos este registro si la IP está vacía
+                }
+                <span class="cov8" title="1">logger.InfoLog.Printf("IP extraída del registro %d: %s", i, sourceIP)
+
+                country, err := GetCountryFromIP(sourceIP)
+                if err != nil </span><span class="cov0" title="0">{
+                        logger.ErrorLog.Printf("Error al obtener el país para la IP %s (registro %d): %v", sourceIP, i, err)
+                        // Decide si quieres fallar todo el batch o solo saltar este registro.
+                        // Por ahora, lo hacemos fallar para demostrar el error.
+                        return nil, fmt.Errorf("error al obtener el país para el registro %d: %w", i, err)
+                }</span>
+                <span class="cov8" title="1">logger.InfoLog.Printf("País obtenido para la IP %s (registro %d): %s", sourceIP, i, country)
+
+                // Aquí puedes decidir si llamas a GetRegionFromCountry y GetSubregionFromRegion
+                // Es mejor tener una función auxiliar para obtener todo el enrichment de una IP
+                // para evitar llamadas repetidas a APIs y manejar errores de forma más granular.
+                // Por simplicidad, aquí solo obtenemos la región por ahora.
+                region, err := GetRegionFromCountry(country)
+                if err != nil </span><span class="cov0" title="0">{
+                        logger.ErrorLog.Printf("Error al obtener la región para el país %s (registro %d): %v", country, i, err)
+                        return nil, fmt.Errorf("error al obtener la región para el registro %d: %w", i, err)
+                }</span>
+                <span class="cov8" title="1">logger.InfoLog.Printf("País: %s, Región: %s (registro %d)", country, region, i)
+
+                // Crear una nueva instancia de EnrichedEventRecord para la base de datos
+                enrichedRecord := models.EnrichedEventRecord{
+                        EventVersion:      record.EventVersion,
+                        UserIdentity:      record.UserIdentity,
+                        EventTime:         record.EventTime,
+                        EventSource:       record.EventSource,
+                        EventName:         record.EventName,
+                        AwsRegion:         record.AwsRegion,
+                        SourceIPAddress:   record.SourceIPAddress,
+                        UserAgent:         record.UserAgent,
+                        RequestParameters: record.RequestParameters,
+                        ResponseElements:  record.ResponseElements,
+                        Enrichment: models.EnrichmentData{ // Asignar la información de enriquecimiento
+                                Country:   country,
+                                Region:    region,
+                                Subregion: "", // No se está obteniendo la subregión en este ejemplo.
+                        },
+                }
+
+                if err := s.repo.InsertLog(ctx, &amp;enrichedRecord); err != nil </span><span class="cov8" title="1">{
+                        logger.ErrorLog.Printf("Error en el servicio al insertar evento enriquecido (registro %d): %v", i, err)
+                        return nil, fmt.Errorf("error al insertar evento enriquecido (registro %d): %w", i, err)
+                }</span>
+
+                <span class="cov8" title="1">enrichedRecords = append(enrichedRecords, &amp;enrichedRecord) // Añadir puntero al slice
+
+                logger.InfoLog.Printf("Evento enriquecido insertado exitosamente (registro %d). SourceIP: %s", i, sourceIP)</span>
+        }
+
+        <span class="cov8" title="1">return enrichedRecords, nil</span> // Devuelve los registros enriquecidos y nil error
+}
+
+type IPInfo struct {
+        Country string `json:"country"`
+        Status  string `json:"status"`
+        Message string `json:"message"` // Añadido para capturar mensajes de error de la API
+}
+
+type CountryInfo []struct {
+        Region    string `json:"region"`
+        Subregion string `json:"subregion"`
+}
+
+func (s *DefaultEnrichmentService) Top10QueryEvents(ctx context.Context) ([]*models.EnrichedEventRecord, error) <span class="cov8" title="1">{
+
+        records, err := s.repo.GetLatestLogs(ctx)
+        if err != nil </span><span class="cov8" title="1">{
+                logger.ErrorLog.Printf("Error en el servicio al obtener los últimos 10 eventos: %v", err)
+                return nil, fmt.Errorf("error al obtener los últimos 10 eventos del repositorio: %w", err)
+        }</span>
+        <span class="cov8" title="1">logger.InfoLog.Println("Servicio: Últimos 10 eventos obtenidos exitosamente.")
+        return records, nil</span>
+}
+
+// Retrieves the country of an IP address using the ip-api.com API.
+func GetCountryFromIP(ip string) (string, error) <span class="cov8" title="1">{
+        request := fmt.Sprintf("http://ip-api.com/json/%s", ip)
+
+        resp, err := http.Get(request)
+        if err != nil </span><span class="cov0" title="0">{
+                return "", fmt.Errorf("error al realizar la solicitud HTTP a ip-api.com: %w", err)
+        }</span>
+        <span class="cov8" title="1">defer resp.Body.Close()
+
+        if resp.StatusCode != http.StatusOK </span><span class="cov0" title="0">{
+                return "", fmt.Errorf("respuesta inesperada de ip-api.com: %s", resp.Status)
+        }</span>
+
+        <span class="cov8" title="1">bodyBytes, err := ioutil.ReadAll(resp.Body)
+        if err != nil </span><span class="cov0" title="0">{
+                return "", fmt.Errorf("error al leer el cuerpo de la respuesta de ip-api.com: %w", err)
+        }</span>
+
+        <span class="cov8" title="1">var ipInfo IPInfo
+        err = json.Unmarshal(bodyBytes, &amp;ipInfo)
+        if err != nil </span><span class="cov0" title="0">{
+                return "", fmt.Errorf("error al decodificar la respuesta de ip-api.com: %w", err)
+        }</span>
+
+        <span class="cov8" title="1">if ipInfo.Status != "success" </span><span class="cov0" title="0">{
+                // Incluir el mensaje de la API si está disponible
+                errMsg := fmt.Sprintf("la consulta a ip-api.com no fue exitosa para IP %s. Estado: %s", ip, ipInfo.Status)
+                if ipInfo.Message != "" </span><span class="cov0" title="0">{
+                        errMsg = fmt.Sprintf("%s, Mensaje: %s", errMsg, ipInfo.Message)
+                }</span>
+                <span class="cov0" title="0">return "", fmt.Errorf(errMsg)</span>
+        }
+
+        <span class="cov8" title="1">return ipInfo.Country, nil</span>
+}
+
+// Retrieves the geographical region of a country using the restcountries.com API.
+func GetRegionFromCountry(country string) (string, error) <span class="cov8" title="1">{
+        request := fmt.Sprintf("https://restcountries.com/v3.1/name/%s", country)
+        resp, err := http.Get(request)
+        if err != nil </span><span class="cov0" title="0">{
+                return "", fmt.Errorf("error al realizar la solicitud HTTP a restcountries.com: %w", err)
+        }</span>
+        <span class="cov8" title="1">defer resp.Body.Close()
+
+        if resp.StatusCode != http.StatusOK </span><span class="cov0" title="0">{
+                // restcountries.com devuelve un error 404 si el país no se encuentra
+                if resp.StatusCode == http.StatusNotFound </span><span class="cov0" title="0">{
+                        return "", fmt.Errorf("país '%s' no encontrado por restcountries.com", country)
+                }</span>
+                <span class="cov0" title="0">return "", fmt.Errorf("respuesta inesperada de restcountries.com: %s", resp.Status)</span>
+        }
+
+        <span class="cov8" title="1">bodyBytes, err := ioutil.ReadAll(resp.Body)
+        if err != nil </span><span class="cov0" title="0">{
+                return "", fmt.Errorf("error al leer el cuerpo de la respuesta de restcountries.com: %w", err)
+        }</span>
+
+        <span class="cov8" title="1">var countryInfo CountryInfo
+        err = json.Unmarshal(bodyBytes, &amp;countryInfo)
+        if err != nil </span><span class="cov0" title="0">{
+                return "", fmt.Errorf("error al decodificar la respuesta de restcountries.com: %w", err)
+        }</span>
+
+        <span class="cov8" title="1">if len(countryInfo) &gt; 0 &amp;&amp; countryInfo[0].Region != "" </span><span class="cov8" title="1">{
+                return countryInfo[0].Region, nil
+        }</span>
+
+        <span class="cov0" title="0">return "", fmt.Errorf("no se encontró la región para el país: %s o la respuesta está vacía", country)</span>
+}
+</pre>
+		
+		</div>
+	</body>
+	<script>
+	(function() {
+		var files = document.getElementById('files');
+		var visible;
+		files.addEventListener('change', onChange, false);
+		function select(part) {
+			if (visible)
+				visible.style.display = 'none';
+			visible = document.getElementById(part);
+			if (!visible)
+				return;
+			files.value = part;
+			visible.style.display = 'block';
+			location.hash = part;
+		}
+		function onChange() {
+			select(files.value);
+			window.scrollTo(0, 0);
+		}
+		if (location.hash != "") {
+			select(location.hash.substr(1));
+		}
+		if (!visible) {
+			select("file0");
+		}
+	})();
+	</script>
+</html>
