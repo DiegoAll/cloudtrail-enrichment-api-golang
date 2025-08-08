@@ -5,19 +5,18 @@ import (
 	"context"
 )
 
-// AuthRepository define la interfaz para las operaciones relacionadas con la autenticación
-// y ahora también para la gestión de tokens.
+// AuthRepository defines the interface for authentication-related operations and now also for token management.
 type AuthRepository interface {
 	InsertUser(ctx context.Context, user *models.User) error
 	GetUserByEmail(ctx context.Context, email string) (*models.User, error)
 	GetUserByUUID(ctx context.Context, uuid string) (*models.User, error)
 
-	// Métodos para la gestión de tokens
+	// Methods for token management
 	InsertToken(ctx context.Context, token *models.Token) error
 	GetTokenByTokenHash(ctx context.Context, tokenHash string) (*models.Token, error)
 	DeleteTokensByUserID(ctx context.Context, userID int) error
 	GetTokenByToken(ctx context.Context, tokenString string) (*models.Token, error)
-	GetUserForToken(ctx context.Context, userID int) (*models.User, error) // Método para obtener usuario por ID
+	GetUserForToken(ctx context.Context, userID int) (*models.User, error)
 }
 
 var AuthRepo AuthRepository
@@ -38,7 +37,7 @@ func GetUserByUUID(ctx context.Context, uuid string) (*models.User, error) {
 	return AuthRepo.GetUserByUUID(ctx, uuid)
 }
 
-// Nuevas funciones para tokens
+// New functions for tokens
 func InsertToken(ctx context.Context, token *models.Token) error {
 	return AuthRepo.InsertToken(ctx, token)
 }

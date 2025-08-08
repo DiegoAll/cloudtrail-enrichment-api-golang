@@ -6,14 +6,14 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-// EnrichmentData representa la información de enriquecimiento geográfico.
+// EnrichmentData represents geographic enrichment information.
 type EnrichmentData struct {
 	Country   string `json:"country" bson:"country"`
 	Region    string `json:"region" bson:"region"`
 	Subregion string `json:"subregion" bson:"subregion"`
 }
 
-// UserIdentity representa la identidad del usuario.
+// UserIdentity represents the user's identity.
 type UserIdentity struct {
 	Type        string `json:"type" bson:"type"`
 	PrincipalID string `json:"principalId" bson:"principalId"`
@@ -23,72 +23,70 @@ type UserIdentity struct {
 	UserName    string `json:"userName" bson:"userName"`
 }
 
-// InstanceItem representa un elemento de instancia.
+// InstanceItem represents an instance item.
 type InstanceItem struct {
 	InstanceID string `json:"instanceId" bson:"instanceId"`
 }
 
-// InstancesSet representa un conjunto de instancias.
+// InstancesSet represents a set of instances.
 type InstancesSet struct {
 	Items []InstanceItem `json:"items" bson:"items"`
 }
 
-// RequestParameters representa los parámetros de la solicitud.
+// RequestParameters represents the request parameters.
 type RequestParameters struct {
 	InstancesSet InstancesSet `json:"instancesSet" bson:"instancesSet"`
 }
 
-// CurrentState representa el estado actual de una instancia.
+// CurrentState represents the current state of an instance.
 type CurrentState struct {
 	Code int    `json:"code" bson:"code"`
 	Name string `json:"name" bson:"name"`
 }
 
-// PreviousState representa el estado previo de una instancia.
+// PreviousState represents the previous state of an instance.
 type PreviousState struct {
 	Code int    `json:"code" bson:"code"`
 	Name string `json:"name" bson:"name"`
 }
 
-// ResponseInstanceItem representa un elemento de instancia en la respuesta.
+// ResponseInstanceItem represents an instance item in the response.
 type ResponseInstanceItem struct {
 	InstanceID    string        `json:"instanceId" bson:"instanceId"`
 	CurrentState  CurrentState  `json:"currentState" bson:"currentState"`
 	PreviousState PreviousState `json:"previousState" bson:"previousState"`
 }
 
-// ResponseInstancesSet representa un conjunto de instancias en la respuesta.
+// ResponseInstancesSet represents a set of instances in the response.
 type ResponseInstancesSet struct {
 	Items []ResponseInstanceItem `json:"items" bson:"items"`
 }
 
-// ResponseElements representa los elementos de la respuesta.
+// ResponseElements represents the response elements.
 type ResponseElements struct {
 	InstancesSet ResponseInstancesSet `json:"instancesSet" bson:"instancesSet"`
 }
 
-// Event es la estructura original que define el formato de entrada de los eventos.
-// Hemos modificado los tipos anidados para usar los tipos nombrados definidos arriba.
+// Event is the original structure defining the input event format.
 type Event struct {
 	Records []struct {
 		EventVersion      string            `json:"eventVersion"`
-		UserIdentity      UserIdentity      `json:"userIdentity"` // Usamos el tipo nombrado
+		UserIdentity      UserIdentity      `json:"userIdentity"`
 		EventTime         time.Time         `json:"eventTime"`
 		EventSource       string            `json:"eventSource"`
 		EventName         string            `json:"eventName"`
 		AwsRegion         string            `json:"awsRegion"`
 		SourceIPAddress   string            `json:"sourceIPAddress"`
 		UserAgent         string            `json:"userAgent"`
-		RequestParameters RequestParameters `json:"requestParameters"` // Usamos el tipo nombrado
-		ResponseElements  ResponseElements  `json:"responseElements"`  // Usamos el tipo nombrado
-		Enrichment        EnrichmentData    `json:"enrichment"`        // Usamos el tipo nombrado
+		RequestParameters RequestParameters `json:"requestParameters"`
+		ResponseElements  ResponseElements  `json:"responseElements"`
+		Enrichment        EnrichmentData    `json:"enrichment"`
 	} `json:"Records"`
 }
 
-// EnrichedEventRecord representa un único registro de evento después de ser enriquecido,
-// listo para ser insertado en la base de datos.
+// EnrichedEventRecord represents a single event record after being enriched, ready to be inserted into the database.
 type EnrichedEventRecord struct {
-	ID                primitive.ObjectID `json:"id,omitempty" bson:"_id,omitempty"` // ID de MongoDB
+	ID                primitive.ObjectID `json:"id,omitempty" bson:"_id,omitempty"` // MongoDB ID
 	EventVersion      string             `json:"eventVersion" bson:"eventVersion"`
 	UserIdentity      UserIdentity       `json:"userIdentity" bson:"userIdentity"`
 	EventTime         time.Time          `json:"eventTime" bson:"eventTime"`
@@ -99,5 +97,5 @@ type EnrichedEventRecord struct {
 	UserAgent         string             `json:"userAgent" bson:"userAgent"`
 	RequestParameters RequestParameters  `json:"requestParameters" bson:"requestParameters"`
 	ResponseElements  ResponseElements   `json:"responseElements" bson:"responseElements"`
-	Enrichment        EnrichmentData     `json:"enrichment" bson:"enrichment"` // La información de enriquecimiento
+	Enrichment        EnrichmentData     `json:"enrichment" bson:"enrichment"` // The enrichment information
 }
