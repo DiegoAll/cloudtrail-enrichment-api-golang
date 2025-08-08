@@ -2,10 +2,10 @@ package token
 
 import (
 	"cloudtrail-enrichment-api-golang/internal/config"
-	"cloudtrail-enrichment-api-golang/internal/pkg/logger" // Importar logger
+	"cloudtrail-enrichment-api-golang/internal/pkg/logger"
 	"cloudtrail-enrichment-api-golang/models"
 	"context"
-	"crypto/sha256" // Importar para SHA256
+	"crypto/sha256"
 	"errors"
 	"fmt"
 	"net/http"
@@ -15,15 +15,15 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
-// User representa la información del usuario contenida en el token JWT.
+// User represents the user information contained in the JWT token.
 type User struct {
 	ID    int    `json:"id"`
 	Email string `json:"email"`
 	Role  string `json:"role"`
 }
 
-// JWTToken representa la estructura del token JWT que se serializará en el payload.
-// Este struct NO DEBE CONTENER DEPENDENCIAS como Config o TokenRepository.
+// JWTToken represents the structure of the JWT token to be serialized in the payload.
+// This struct must not contain dependencies like Config or TokenRepository. (package Config Issue)
 type JWTToken struct {
 	UserID    int       `json:"user_id,omitempty"`
 	Email     string    `json:"email,omitempty"`
@@ -36,24 +36,23 @@ type JWTToken struct {
 	UpdatedAt time.Time `json:"updated_at"`
 }
 
-// TokenDBRepository es una interfaz para las operaciones de persistencia del token.
-// Se define aquí para que el paquete token no tenga una dependencia directa al paquete repository.
+// TokenDBRepository is an interface for token persistence operations.
+// Defined here so that the token package doesn’t directly depend on the repository package.
 type TokenDBRepository interface {
 	InsertToken(ctx context.Context, token *models.Token) error
 	GetTokenByTokenHash(ctx context.Context, tokenHash string) (*models.Token, error)
 	DeleteTokensByUserID(ctx context.Context, userID int) error
-	GetTokenByToken(ctx context.Context, tokenString string) (*models.Token, error) // Método nuevo para obtener por token directamente
-	GetUserForToken(ctx context.Context, userID int) (*models.User, error)          // Método para obtener usuario por ID
+	GetTokenByToken(ctx context.Context, tokenString string) (*models.Token, error)
+	GetUserForToken(ctx context.Context, userID int) (*models.User, error)
 }
 
-// JWTService es el struct que contendrá las dependencias
-// y los métodos de negocio relacionados con los tokens JWT.
+// JWTService is the struct that holds the dependencies and methods related to JWT tokens.
 type JWTService struct {
 	Config          *config.Config
 	TokenRepository TokenDBRepository
 }
 
-// NewJWTService crea una nueva instancia del servicio de token JWT.
+// NewJWTService creates a new instance of the JWT token service.
 func NewJWTService(cfg *config.Config, tokenRepo TokenDBRepository) *JWTService {
 	return &JWTService{
 		Config:          cfg,
@@ -61,8 +60,7 @@ func NewJWTService(cfg *config.Config, tokenRepo TokenDBRepository) *JWTService 
 	}
 }
 
-// GetByToken toma un token en texto plano y busca el token completo en la base de datos.
-// Devuelve un puntero al modelo Token.
+// GetByToken takes a plain text token and looks it up in the database. Returns a pointer to the Token model.
 func (j *JWTService) GetByToken(ctx context.Context, plainText string) (*models.Token, error) {
 	dbTimeout := j.Config.DatabaseConfig.DBTimeout
 	ctx, cancel := context.WithTimeout(ctx, dbTimeout)
@@ -70,13 +68,13 @@ func (j *JWTService) GetByToken(ctx context.Context, plainText string) (*models.
 
 	token, err := j.TokenRepository.GetTokenByToken(ctx, plainText)
 	if err != nil {
-		logger.ErrorLog.Printf("Error al obtener token por valor en DB: %v", err)
+		logger.ErrorLog.Printf("Error getting token by value in DB: %v", err)
 		return nil, err
 	}
 	return token, nil
 }
 
-// GetUserForToken obtiene un usuario de la base de datos dado un token persistido.
+// GetUserForToken retrieves a user from the database given a persisted token.
 func (j *JWTService) GetUserForToken(ctx context.Context, token models.Token) (*models.User, error) {
 	dbTimeout := j.Config.DatabaseConfig.DBTimeout
 	ctx, cancel := context.WithTimeout(ctx, dbTimeout)
@@ -84,41 +82,40 @@ func (j *JWTService) GetUserForToken(ctx context.Context, token models.Token) (*
 
 	user, err := j.TokenRepository.GetUserForToken(ctx, token.UserID)
 	if err != nil {
-		logger.ErrorLog.Printf("Error al obtener usuario para el token en DB: %v", err)
+		logger.ErrorLog.Printf("Error retrieving user for token in DB: %v", err)
 		return nil, err
 	}
 	return user, nil
 }
 
-// InsertJWT inserta un nuevo token JWT en la base de datos, revocando los anteriores para el mismo usuario.
+// InsertJWT inserts a new JWT token into the database, revoking any previous ones for the same user.
 func (j *JWTService) InsertJWT(ctx context.Context, tokenData models.Token, user models.User) error {
 	dbTimeout := j.Config.DatabaseConfig.DBTimeout
 	fmt.Println("DB TIMEOUT", dbTimeout)
 	ctx, cancel := context.WithTimeout(ctx, dbTimeout)
 	defer cancel()
 
-	// Eliminar cualquier token existente para este usuario
+	// Remove any existing token for this user
 	err := j.TokenRepository.DeleteTokensByUserID(ctx, tokenData.UserID)
 	if err != nil {
-		logger.ErrorLog.Printf("Error al eliminar tokens existentes para el usuario %d: %v", tokenData.UserID, err)
+		logger.ErrorLog.Printf("Error deleting existing tokens for user %d: %v", tokenData.UserID, err)
 		return err
 	}
 
-	// Asignar el email del usuario al token
 	tokenData.Email = user.Email
 	tokenData.Role = user.Role
 
-	// Insertar el nuevo token
+	// Insert the new token
 	err = j.TokenRepository.InsertToken(ctx, &tokenData)
 	if err != nil {
-		logger.ErrorLog.Printf("Error al insertar el nuevo token para el usuario %d: %v", tokenData.UserID, err)
+		logger.ErrorLog.Printf("Error inserting new token for user %d: %v", tokenData.UserID, err)
 		return err
 	}
 
 	return nil
 }
 
-// DeleteByJWTToken elimina un token de la base de datos dado su valor en texto plano.
+// DeleteByJWTToken deletes a token from the database given its plain text value.
 func (j *JWTService) DeleteByJWTToken(ctx context.Context, plainText string) error {
 	dbTimeout := j.Config.DatabaseConfig.DBTimeout
 	ctx, cancel := context.WithTimeout(ctx, dbTimeout)
@@ -126,24 +123,24 @@ func (j *JWTService) DeleteByJWTToken(ctx context.Context, plainText string) err
 
 	tokenToDelete, err := j.TokenRepository.GetTokenByToken(ctx, plainText)
 	if err != nil {
-		logger.ErrorLog.Printf("Token a eliminar no encontrado: %v", err)
-		return errors.New("token a eliminar no encontrado")
+		logger.ErrorLog.Printf("Token to delete not found: %v", err)
+		return errors.New("token to delete not found")
 	}
 
 	err = j.TokenRepository.DeleteTokensByUserID(ctx, tokenToDelete.UserID)
 	if err != nil {
-		logger.ErrorLog.Printf("Error al eliminar token por texto plano para el usuario %d: %v", tokenToDelete.UserID, err)
+		logger.ErrorLog.Printf("Error deleting token by plain text for user %d: %v", tokenToDelete.UserID, err)
 		return err
 	}
 
 	return nil
 }
 
-// GenerateJWTToken genera un nuevo token JWT para un usuario dado y lo persiste.
+// GenerateJWTToken generates a new JWT token for a given user and persists it.
 func (j *JWTService) GenerateJWTToken(ctx context.Context, userID int, email string, role string) (string, time.Time, error) {
 	expiry := time.Now().Add(j.Config.AuthConfig.TokenDuration)
 
-	// Aquí usamos JWTToken solo para los claims que se serializarán.
+	// Here we use JWTToken only for the claims to be serialized.
 	claims := &JWTToken{
 		UserID: userID,
 		Email:  email,
@@ -154,20 +151,20 @@ func (j *JWTService) GenerateJWTToken(ctx context.Context, userID int, email str
 			ExpiresAt: jwt.NewNumericDate(expiry),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
 			NotBefore: jwt.NewNumericDate(time.Now()),
-			Issuer:    "g3notype",
-			Audience:  []string{"mis-usuarios"},
+			Issuer:    "The Organization",
+			Audience:  []string{"The Users"},
 		},
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	secretkey := j.Config.AuthConfig.JWTSecret
 	if secretkey == "" {
-		return "", time.Time{}, errors.New("clave secreta JWT no configurada")
+		return "", time.Time{}, errors.New("JWT secret key not configured")
 	}
 
 	signedToken, err := token.SignedString([]byte(secretkey))
 	if err != nil {
-		logger.ErrorLog.Printf("Error al firmar el token JWT: %v", err)
+		logger.ErrorLog.Printf("Error signing JWT token: %v", err)
 		return "", time.Time{}, err
 	}
 
@@ -187,58 +184,57 @@ func (j *JWTService) GenerateJWTToken(ctx context.Context, userID int, email str
 
 	err = j.InsertJWT(ctx, dbToken, models.User{ID: userID, Email: email, Role: role})
 	if err != nil {
-		logger.ErrorLog.Printf("Error al persistir el token en la DB para el usuario %s: %v", email, err)
-		return "", time.Time{}, fmt.Errorf("error al persistir el token: %w", err)
+		logger.ErrorLog.Printf("Error persisting token in DB for user %s: %v", email, err)
+		return "", time.Time{}, fmt.Errorf("error persisting token: %w", err)
 	}
 
 	return signedToken, expiry, nil
 }
 
-// ExtractJWTToken extrae el token JWT del encabezado Authorization.
+// ExtractJWTToken extracts the JWT token from the Authorization header.
 func (j *JWTService) ExtractJWTToken(r *http.Request) (string, error) {
 	authorizationHeader := r.Header.Get("Authorization")
 	if authorizationHeader == "" {
-		return "", errors.New("encabezado de autorización no proporcionado")
+		return "", errors.New("authorization header not provided")
 	}
 
 	headerParts := strings.Split(authorizationHeader, " ")
 	if len(headerParts) != 2 || headerParts[0] != "Bearer" {
-		return "", errors.New("formato de token inválido")
+		return "", errors.New("invalid token format")
 	}
 
 	tokenString := headerParts[1]
 	return tokenString, nil
 }
 
-// ValidJWTToken valida el token JWT y devuelve la información del usuario,
-// además de verificar su existencia en la base de datos.
+// ValidJWTToken validates the JWT token and returns user information, also verifying its existence in the database.
 func (j *JWTService) ValidJWTToken(ctx context.Context, tokenString string) (*User, error) {
 	secretkey := j.Config.AuthConfig.JWTSecret
 	if secretkey == "" {
-		return nil, errors.New("clave secreta JWT no configurada")
+		return nil, errors.New("JWT secret key not configured")
 	}
 
 	token, err := jwt.ParseWithClaims(tokenString, &JWTToken{}, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-			return nil, fmt.Errorf("método de firma inesperado: %v", token.Header["alg"])
+			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
 		}
 		return []byte(secretkey), nil
 	})
 
 	if err != nil {
-		logger.ErrorLog.Printf("Error al parsear o validar token JWT: %v", err)
-		return nil, fmt.Errorf("token inválido o expirado: %w", err)
+		logger.ErrorLog.Printf("Error parsing or validating JWT token: %v", err)
+		return nil, fmt.Errorf("invalid or expired token: %w", err)
 	}
 
 	claims, ok := token.Claims.(*JWTToken)
 	if !ok || !token.Valid {
-		logger.ErrorLog.Println("Claims de token JWT inválidos o token no válido.")
-		return nil, errors.New("token inválido")
+		logger.ErrorLog.Println("Invalid JWT token claims or token not valid.")
+		return nil, errors.New("invalid token")
 	}
 
 	if time.Now().After(claims.Expiry) {
-		logger.InfoLog.Printf("Token expirado para el usuario: %s", claims.Email)
-		return nil, errors.New("token expirado")
+		logger.InfoLog.Printf("Token expired for user: %s", claims.Email)
+		return nil, errors.New("token expired")
 	}
 
 	tokenHash := sha256.Sum256([]byte(tokenString))
@@ -246,13 +242,13 @@ func (j *JWTService) ValidJWTToken(ctx context.Context, tokenString string) (*Us
 
 	persistedToken, err := j.TokenRepository.GetTokenByTokenHash(ctx, tokenHashString)
 	if err != nil {
-		logger.ErrorLog.Printf("Error al buscar el token en la base de datos por hash: %v", err)
-		return nil, errors.New("token no encontrado o revocado")
+		logger.ErrorLog.Printf("Error looking up token in database by hash: %v", err)
+		return nil, errors.New("token not found or revoked")
 	}
 
 	if persistedToken.UserID != claims.UserID || persistedToken.Email != claims.Email || persistedToken.Role != claims.Role || time.Now().After(persistedToken.Expiry) {
-		logger.ErrorLog.Printf("Inconsistencia en el token persistido o token expirado en DB para usuario: %s", claims.Email)
-		return nil, errors.New("token inválido o revocado")
+		logger.ErrorLog.Printf("Persisted token inconsistency or expired token in DB for user: %s", claims.Email)
+		return nil, errors.New("invalid or revoked token")
 	}
 
 	return &User{
@@ -262,7 +258,7 @@ func (j *JWTService) ValidJWTToken(ctx context.Context, tokenString string) (*Us
 	}, nil
 }
 
-// AuthenticateJWTToken extrae y valida el token JWT de la solicitud.
+// AuthenticateJWTToken extracts and validates the JWT token from the request.
 func (j *JWTService) AuthenticateJWTToken(r *http.Request) (*User, error) {
 	tokenString, err := j.ExtractJWTToken(r)
 	if err != nil {
