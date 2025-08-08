@@ -1,7 +1,6 @@
 package main
 
 import (
-	"cloudtrail-enrichment-api-golang/internal/pkg/utils"
 	"encoding/json"
 	"net/http"
 
@@ -22,15 +21,14 @@ func (app *application) routes() http.Handler {
 		MaxAge:           300,
 	}))
 
-	// Grupo de rutas para la versión 1 de la API
+	// Route group for API version 1
 	mux.Route("/v1", func(r chi.Router) {
-		// Rutas públicas de la V1
-
+		// Public routes for V1
 		r.Get("/health", app.systemController.HealthCheck)
 		r.Post("/signup", app.authController.RegisterUser)
 		r.Post("/login", app.authController.AuthenticateUser)
 
-		// Rutas protegidas por el middleware de autenticación de la V1
+		// Routes protected by the V1 authentication middleware
 		r.Route("/enrichment", func(r chi.Router) {
 			r.Use(app.middleware.AuthTokenMiddleware)
 			r.Post("/", app.enrichmentController.IngestData)
@@ -38,9 +36,9 @@ func (app *application) routes() http.Handler {
 		})
 
 		// r.Route("/admin", func(r chi.Router) {
-		// 	r.Use(app.middleware.AuthTokenMiddleware)
-		// 	// Authorization middleware with roles example
-		// 	r.Get("/dashboard", app.AdminDashboard)
+		//  r.Use(app.middleware.AuthTokenMiddleware)
+		//  // Authorization middleware with roles example
+		//  r.Get("/dashboard", app.AdminDashboard)
 		// })
 	})
 
@@ -57,14 +55,14 @@ func (app *application) Health(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(response)
 }
 
-// AdminDashboard es un handler de ejemplo para una ruta protegida.
-func (app *application) AdminDashboard(w http.ResponseWriter, r *http.Request) {
-	response := map[string]string{
-		"message": "Bienvenido al panel de administración!",
-	}
-	utils.WriteJSON(w, http.StatusOK, utils.JSONResponse{
-		Error:   false,
-		Message: "Dashboard de administración",
-		Data:    response,
-	})
-}
+// AdminDashboard is an example handler for a protected route.
+// func (app *application) AdminDashboard(w http.ResponseWriter, r *http.Request) {
+// 	response := map[string]string{
+// 		"message": "Welcome to the admin panel!",
+// 	}
+// 	utils.WriteJSON(w, http.StatusOK, utils.JSONResponse{
+// 		Error:   false,
+// 		Message: "Administration Dashboard",
+// 		Data:    response,
+// 	})
+// }
