@@ -15,6 +15,14 @@ Although it might seem like an anti-pattern, it is not in this context. There is
     docker-compose down -v --rmi all
     docker-compose up --build -d
 
+
+## Run unit tests (develop branch)
+
+    go test ./... -coverprofile=coverage.out
+    go tool cover -html=coverage.out -o coverage.html
+    go tool cover -func=coverage.out | grep total
+
+
 ## API Endpoints
 
 

@@ -14,8 +14,8 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/readpref"
 )
 
-// MongoInstance encapsula la conexión a MongoDB y la colección específica.
-// *EnrichMongoRepository  (Alternativa)
+// MongoInstance encapsulates the MongoDB connection and the specific collection.
+// *EnrichMongoRepository  (Alternative)
 type MongoInstance struct {
 	Client     *mongo.Client
 	Collection *mongo.Collection
@@ -24,107 +24,52 @@ type MongoInstance struct {
 func BuildMongoURI(cfg *config.MongoDBConfig) string {
 	var mongoURI string
 	if cfg.Username != "" && cfg.Password != "" {
-		// Incluye el nombre de la base de datos en la URI si se usan credenciales,
-		// y opcionalmente authSource si la base de datos de autenticación es diferente.
-		// Asumimos authSource=admin por defecto si las credenciales son proporcionadas.
 		mongoURI = fmt.Sprintf("mongodb://%s:%s@%s:%d/%s?authSource=admin",
 			cfg.Username, cfg.Password, cfg.Host, cfg.Port, cfg.Database)
 	} else {
-		// Si no hay credenciales, solo host, puerto y base de datos.
+		// If no credentials, only host, port, and database.
 		mongoURI = fmt.Sprintf("mongodb://%s:%d/%s", cfg.Host, cfg.Port, cfg.Database)
 	}
-	logger.InfoLog.Printf("Construyendo MONGO_URI a partir de configuraciones: %s", mongoURI)
+	logger.InfoLog.Printf("Building MONGO_URI from configurations: %s", mongoURI)
 	return mongoURI
 }
-
-// NewMongoClient establece una nueva conexión a MongoDB y devuelve una instancia de MongoInstance.
-// func NewMongoClient(cfg *config.Config) (*MongoInstance, error) {
-// 	// Usar la configuración específica de MongoDB
-// 	mongoCfg := cfg.MongoDBConfig
-
-// 	ctx, cancel := context.WithTimeout(context.Background(), mongoCfg.DBTimeout)
-// 	defer cancel()
-
-// 	// Intentar obtener la MONGO_URI completa de las variables de entorno primero
-// 	mongoURI := os.Getenv("MONGO_URI")
-// 	if mongoURI == "" {
-// 		// Si MONGO_URI no está definida, construirla desde los parámetros individuales
-// 		mongoURI = fmt.Sprintf("mongodb://%s:%d", mongoCfg.Host, mongoCfg.Port)
-// 		if mongoCfg.Username != "" && mongoCfg.Password != "" {
-// 			mongoURI = fmt.Sprintf("mongodb://%s:%s@%s:%d", mongoCfg.Username, mongoCfg.Password, mongoCfg.Host, mongoCfg.Port)
-// 			// Se recomienda especificar authSource si usas credenciales de usuario/contraseña
-// 			mongoURI = fmt.Sprintf("%s/%s?authSource=admin", mongoURI, mongoCfg.Database)
-// 		} else {
-// 			// Si no hay credenciales, solo añadir la base de datos a la URI
-// 			mongoURI = fmt.Sprintf("%s/%s", mongoURI, mongoCfg.Database)
-// 		}
-// 		logger.InfoLog.Println("Construyendo MONGO_URI a partir de configuraciones individuales.")
-// 	} else {
-// 		logger.InfoLog.Println("Usando MONGO_URI desde variables de entorno para la conexión a MongoDB.")
-// 	}
-
-// 	clientOptions := options.Client().ApplyURI(mongoURI)
-// 	client, err := mongo.Connect(ctx, clientOptions)
-// 	if err != nil {
-// 		logger.ErrorLog.Printf("Error al conectar a MongoDB: %v", err)
-// 		return nil, fmt.Errorf("error al conectar a MongoDB: %w", err)
-// 	}
-
-// 	// Haz ping a la base de datos para verificar la conexión
-// 	err = client.Ping(ctx, readpref.Primary())
-// 	if err != nil {
-// 		logger.ErrorLog.Printf("Error al hacer ping a MongoDB: %v", err)
-// 		return nil, fmt.Errorf("error al hacer ping a MongoDB: %w", err)
-// 	}
-
-// 	logger.InfoLog.Println("Conexión a MongoDB establecida exitosamente.")
-
-// 	// Aquí asumimos una base de datos y colección específicas para los eventos de enriquecimiento
-// 	collection := client.Database(cfg.MongoDBConfig.Database).Collection("enriched_events")
-
-// 	return &MongoInstance{Client: client, Collection: collection}, nil
-// }
 
 func NewMongoClient(mongoURI string, timeout time.Duration) (*mongo.Client, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 
-	logger.InfoLog.Printf("[DEBUG] URI de MongoDB final usada para la conexión: %s", mongoURI)
+	logger.InfoLog.Printf("[DEBUG] Final MongoDB URI used for connection: %s", mongoURI)
 
 	clientOptions := options.Client().ApplyURI(mongoURI)
 	client, err := mongo.Connect(ctx, clientOptions)
 	if err != nil {
-		logger.ErrorLog.Printf("Error al conectar a MongoDB: %v", err)
-		return nil, fmt.Errorf("error al conectar a MongoDB: %w", err)
+		logger.ErrorLog.Printf("Error connecting to MongoDB: %v", err)
+		return nil, fmt.Errorf("error connecting to MongoDB: %w", err)
 	}
 
-	// Haz ping a la base de datos para verificar la conexión
+	// Ping the database to verify connection
 	err = client.Ping(ctx, readpref.Primary())
 	if err != nil {
-		logger.ErrorLog.Printf("Error al hacer ping a MongoDB: %v", err)
-		// Desconectar el cliente si el ping falla para liberar recursos.
+		logger.ErrorLog.Printf("Error pinging MongoDB: %v", err)
+		// Disconnect the client if the ping fails to free resources.
 		if disconnectErr := client.Disconnect(context.Background()); disconnectErr != nil {
-			logger.ErrorLog.Printf("Error al desconectar el cliente de MongoDB después de un fallo en el ping: %v", disconnectErr)
+			logger.ErrorLog.Printf("Error disconnecting MongoDB client after ping failure: %v", disconnectErr)
 		}
-		return nil, fmt.Errorf("error al hacer ping a MongoDB: %w", err)
+		return nil, fmt.Errorf("error pinging MongoDB: %w", err)
 	}
 
-	logger.InfoLog.Println("Conexión a MongoDB establecida exitosamente.")
+	logger.InfoLog.Println("MongoDB connection established successfully.")
 	return client, nil
 }
 
-// EnrichmentMongoRepository implementa la interfaz EnrichmentRepository para MongoDB.
+// EnrichmentMongoRepository implements the EnrichmentRepository interface for MongoDB.
 type EnrichmentMongoRepository struct {
 	mongoInstance *MongoInstance
 }
 
-// NewEnrichMongoRepository crea una nueva instancia de EnrichmentMongoRepository.
-// func NewEnrichMongoRepository(mi *MongoInstance) *EnrichmentMongoRepository {
-// 	return &EnrichmentMongoRepository{mongoInstance: mi}
-// }
-
+// NewEnrichMongoRepository creates a new instance of EnrichmentMongoRepository.
 func NewEnrichMongoRepository(client *mongo.Client, dbName, collectionName string) *EnrichmentMongoRepository {
-	logger.InfoLog.Printf("[DEBUG] Conectando a MongoDB. Base de datos: '%s', Colección: '%s'", dbName, collectionName)
+	logger.InfoLog.Printf("[DEBUG] Connecting to MongoDB. Database: '%s', Collection: '%s'", dbName, collectionName)
 	collection := client.Database(dbName).Collection(collectionName)
 
 	return &EnrichmentMongoRepository{
@@ -135,51 +80,51 @@ func NewEnrichMongoRepository(client *mongo.Client, dbName, collectionName strin
 	}
 }
 
-// InsertLog inserta un nuevo registro de evento enriquecido en MongoDB.
+// InsertLog inserts a new enriched event record into MongoDB.
 func (m *EnrichmentMongoRepository) InsertLog(ctx context.Context, event *models.EnrichedEventRecord) error {
-	ctx, cancel := context.WithTimeout(ctx, 5*time.Second) // Usar el timeout del contexto, o definir uno si es nil
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second) // Use context timeout, or define one if nil
 	defer cancel()
 
 	_, err := m.mongoInstance.Collection.InsertOne(ctx, event)
 	if err != nil {
-		logger.ErrorLog.Printf("Error al insertar evento enriquecido en MongoDB: %v", err)
-		return fmt.Errorf("error al insertar evento enriquecido: %w", err)
+		logger.ErrorLog.Printf("Error inserting enriched event into MongoDB: %v", err)
+		return fmt.Errorf("error inserting enriched event: %w", err)
 	}
-	logger.InfoLog.Printf("Evento enriquecido insertado en MongoDB. EventSource: %s", event.EventSource)
+	logger.InfoLog.Printf("Enriched event inserted into MongoDB. EventSource: %s", event.EventSource)
 	return nil
 }
 
-// GetLatestLogs recupera los últimos 10 registros de eventos enriquecidos de MongoDB.
+// GetLatestLogs retrieves the last 10 enriched event records from MongoDB.
 func (m *EnrichmentMongoRepository) GetLatestLogs(ctx context.Context) ([]*models.EnrichedEventRecord, error) {
-	ctx, cancel := context.WithTimeout(ctx, 5*time.Second) // Usar el timeout del contexto, o definir uno si es nil
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second) // Use context timeout, or define one if nil
 	defer cancel()
 
 	var events []*models.EnrichedEventRecord
 	findOptions := options.Find()
-	findOptions.SetSort(bson.D{{Key: "eventTime", Value: -1}}) // Ordenar por fecha de evento descendente (-1 most recent)
-	findOptions.SetLimit(10)                                   // Limitar a los últimos 10
+	findOptions.SetSort(bson.D{{Key: "eventTime", Value: -1}}) // Sort by eventTime descending (-1 most recent)
+	findOptions.SetLimit(10)                                   // Limit to last 10
 
 	cursor, err := m.mongoInstance.Collection.Find(ctx, bson.D{}, findOptions)
 	if err != nil {
-		logger.ErrorLog.Printf("Error al obtener los últimos eventos enriquecidos de MongoDB: %v", err)
-		return nil, fmt.Errorf("error al obtener los últimos eventos enriquecidos: %w", err)
+		logger.ErrorLog.Printf("Error getting latest enriched events from MongoDB: %v", err)
+		return nil, fmt.Errorf("error getting latest enriched events: %w", err)
 	}
 	defer cursor.Close(ctx)
 
 	for cursor.Next(ctx) {
 		var event models.EnrichedEventRecord
 		if err := cursor.Decode(&event); err != nil {
-			logger.ErrorLog.Printf("Error al decodificar evento de MongoDB: %v", err)
-			return nil, fmt.Errorf("error al decodificar evento: %w", err)
+			logger.ErrorLog.Printf("Error decoding MongoDB event: %v", err)
+			return nil, fmt.Errorf("error decoding event: %w", err)
 		}
 		events = append(events, &event)
 	}
 
 	if err := cursor.Err(); err != nil {
-		logger.ErrorLog.Printf("Error en el cursor de MongoDB: %v", err)
-		return nil, fmt.Errorf("error en el cursor de MongoDB: %w", err)
+		logger.ErrorLog.Printf("Error in MongoDB cursor: %v", err)
+		return nil, fmt.Errorf("error in MongoDB cursor: %w", err)
 	}
 
-	logger.InfoLog.Println("Últimos 10 eventos enriquecidos obtenidos de MongoDB.")
+	logger.InfoLog.Println("Last 10 enriched events retrieved from MongoDB.")
 	return events, nil
 }
