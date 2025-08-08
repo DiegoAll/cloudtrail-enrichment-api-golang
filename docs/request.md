@@ -1,6 +1,5 @@
 # Request
 
-Quitar el semver
 
 ## Health
 

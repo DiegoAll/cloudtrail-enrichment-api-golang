@@ -46,18 +46,17 @@ type MongoDBConfig struct {
 	Username   string `json:"username"`
 	Password   string `json:"password"`
 	Database   string `json:"database"`
-	Collection string `json:"collection"` // ¡Nuevo campo para el nombre de la colección!
+	Collection string `json:"collection"`
 	// SSLMode      string        `json:"ssl_mode"`
 	DBTimeout time.Duration `json:"db_timeout"`
 	// MaxOpenConns int           `json:"max_open_conns"`
 }
 
 type AuthConfig struct {
-	// Enabled	   bool          `json:"enabled"`
 	JWTSecret     string `json:"jwt_secret"`
 	JWTPrivateKey string `json:"jwt_private_key"`
 	JWTPublicKey  string `json:"jwt_public_key"`
-	HashCost      int    `json:"hash_cost"` //store in DB
+	HashCost      int    `json:"hash_cost"` // store in DB
 	// TokenDuration string `json:"token_duration"` // string type
 	TokenDuration time.Duration `json:"token_duration"`
 }
