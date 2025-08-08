@@ -2,60 +2,55 @@ package middleware
 
 import (
 	"cloudtrail-enrichment-api-golang/internal/pkg/logger"
-	"cloudtrail-enrichment-api-golang/internal/pkg/token" // Importa el paquete token
+	"cloudtrail-enrichment-api-golang/internal/pkg/token"
 	"cloudtrail-enrichment-api-golang/internal/pkg/utils"
-	"cloudtrail-enrichment-api-golang/services" // Importa el paquete services
-	"context"                                   // Importa context
+	"cloudtrail-enrichment-api-golang/services"
+	"context"
 	"net/http"
 )
 
-// Middleware contiene las dependencias para los middlewares.
 type Middleware struct {
-	JWTService  *token.JWTService    // CAMBIO: Ahora es *token.JWTService
-	AuthService services.AuthService // Añade la dependencia del AuthService
+	JWTService  *token.JWTService
+	AuthService services.AuthService
 }
 
-// NewMiddleware crea una nueva instancia de Middleware.
-// CAMBIO: Recibe *token.JWTService en lugar de *token.JWTToken
+// NewMiddleware creates a new instance of Middleware.
 func NewMiddleware(jwtService *token.JWTService, authService services.AuthService) *Middleware {
 	return &Middleware{
-		JWTService:  jwtService,  // CAMBIO: Asigna jwtService
-		AuthService: authService, // Asigna el servicio de autenticación
+		JWTService:  jwtService,
+		AuthService: authService,
 	}
 }
 
-// AuthTokenMiddleware es un middleware que valida el token JWT de la solicitud.
+// AuthTokenMiddleware is a middleware that validates the JWT token from the request.
 func (mw *Middleware) AuthTokenMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		logger.InfoLog.Println("Ejecutando AuthTokenMiddleware...")
+		logger.InfoLog.Println("Executing AuthTokenMiddleware...")
 
-		// CAMBIO: Llama al método de JWTService
 		tokenString, err := mw.JWTService.ExtractJWTToken(r)
 		if err != nil {
 			payload := utils.JSONResponse{
 				Error:   true,
-				Message: "Token no proporcionado o formato inválido: " + err.Error(),
+				Message: "Token not provided or invalid format: " + err.Error(),
 			}
-			logger.ErrorLog.Printf("Error al extraer token: %v", err)
+			logger.ErrorLog.Printf("Error extracting token: %v", err)
 			utils.WriteJSON(w, http.StatusUnauthorized, payload)
 			return
 		}
 
-		// Llama al servicio de autenticación para validar el token y verificar el usuario
-		// El servicio de autenticación a su vez usará JWTService.ValidJWTToken
+		// Calls the authentication service to validate the token and check the user.
 		userClaims, err := mw.AuthService.ValidateTokenForMiddleware(r.Context(), tokenString)
 		if err != nil {
 			payload := utils.JSONResponse{
 				Error:   true,
-				Message: "Autenticación fallida: " + err.Error(),
+				Message: "Authentication failed: " + err.Error(),
 			}
-			logger.ErrorLog.Printf("Validación de token fallida: %v", err)
+			logger.ErrorLog.Printf("Token validation failed: %v", err)
 			utils.WriteJSON(w, http.StatusUnauthorized, payload)
 			return
 		}
 
-		// Opcional: Puedes añadir los claims del usuario al contexto de la solicitud
-		// para que los handlers posteriores puedan acceder a ellos.
+		// WIP: Add the user's claims to the request context so that subsequent handlers can access them.
 		ctx := context.WithValue(r.Context(), "userClaims", userClaims)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
