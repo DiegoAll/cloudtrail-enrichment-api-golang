@@ -7,53 +7,52 @@ import (
 	"cloudtrail-enrichment-api-golang/services"
 	"errors"
 	"net/http"
-	// Asegúrate de importar uuid si lo usas para generar UUIDs de usuario
 )
 
-// AuthController maneja las solicitudes HTTP relacionadas con la autenticación.
+// AuthController Handles HTTP requests related to authentication.
 type AuthController struct {
 	service services.AuthService
 }
 
-// NewAuthController crea una nueva instancia de AuthController.
+// NewAuthController Creates a new instance of AuthController.
 func NewAuthController(s services.AuthService) *AuthController {
 	return &AuthController{
 		service: s,
 	}
 }
 
-// RegisterUser maneja el registro de nuevos usuarios.
+// RegisterUser Handles the registration of new users.
 func (ac *AuthController) RegisterUser(w http.ResponseWriter, r *http.Request) {
 	var payload models.RegisterPayload
 	err := utils.ReadJSON(w, r, &payload)
 	if err != nil {
-		logger.ErrorLog.Printf("Error al decodificar payload de registro: %v", err)
+		logger.ErrorLog.Printf("Error decoding registration payload: %v", err)
 		utils.ErrorJSON(w, err, http.StatusBadRequest)
 		return
 	}
 
-	// Validaciones básicas de entrada
+	// Basic input validations.
 	if payload.Email == "" || payload.Password == "" {
-		logger.ErrorLog.Println("Email o contraseña vacíos en el registro.")
-		utils.ErrorJSON(w, errors.New("email y contraseña son requeridos"), http.StatusBadRequest)
+		logger.ErrorLog.Println("Email or password empty during registration.")
+		utils.ErrorJSON(w, errors.New("email and password are required"), http.StatusBadRequest)
 		return
 	}
-	// Asignar un rol por defecto si no se especifica o validar el rol
+	// Assign a default role if not specified or validate the role.
 	if payload.Role == "" {
-		payload.Role = "user" // Rol por defecto
+		payload.Role = "user" // Default role.
 	}
 
-	// Llama al servicio para registrar el usuario
+	// Calls the service to register the user.
 	user, err := ac.service.RegisterUser(r.Context(), &payload)
 	if err != nil {
-		logger.ErrorLog.Printf("Error al registrar usuario en el servicio: %v", err)
+		logger.ErrorLog.Printf("Error registering user in service: %v", err)
 		utils.ErrorJSON(w, err, http.StatusInternalServerError)
 		return
 	}
 
 	response := utils.JSONResponse{
 		Error:   false,
-		Message: "Usuario registrado exitosamente",
+		Message: "User registered successfully",
 		Data: map[string]string{
 			"uuid":  user.UUID,
 			"email": user.Email,
@@ -61,55 +60,55 @@ func (ac *AuthController) RegisterUser(w http.ResponseWriter, r *http.Request) {
 		},
 	}
 	utils.WriteJSON(w, http.StatusCreated, response)
-	logger.InfoLog.Printf("Usuario %s registrado con éxito.", user.Email)
+	logger.InfoLog.Printf("User %s registered successfully.", user.Email)
 }
 
-// AuthenticateUser maneja el inicio de sesión de usuarios y la generación de tokens.
+// AuthenticateUser handles user login and token generation.
 func (ac *AuthController) AuthenticateUser(w http.ResponseWriter, r *http.Request) {
 	var payload models.LoginPayload
 	err := utils.ReadJSON(w, r, &payload)
 	if err != nil {
-		logger.ErrorLog.Printf("Error al decodificar payload de autenticación: %v", err)
+		logger.ErrorLog.Printf("Error decoding authentication payload: %v", err)
 		utils.ErrorJSON(w, err, http.StatusBadRequest)
 		return
 	}
 
 	if payload.Email == "" || payload.Password == "" {
-		logger.ErrorLog.Println("Email o contraseña vacíos en la autenticación.")
-		utils.ErrorJSON(w, errors.New("email y contraseña son requeridos"), http.StatusBadRequest)
+		logger.ErrorLog.Println("Email or password empty during authentication.")
+		utils.ErrorJSON(w, errors.New("email and password are required"), http.StatusBadRequest)
 		return
 	}
 
-	// Llama al servicio para autenticar al usuario y obtener el token
+	// Calls the service to authenticate the user and get the token.
 	user, jwtToken, err := ac.service.AuthenticateUser(r.Context(), payload.Email, payload.Password)
 	if err != nil {
-		logger.ErrorLog.Printf("Error de autenticación en el servicio para %s: %v", payload.Email, err)
+		logger.ErrorLog.Printf("Authentication error in service for %s: %v", payload.Email, err)
 		utils.ErrorJSON(w, err, http.StatusUnauthorized) // 401 Unauthorized
 		return
 	}
 
 	response := utils.JSONResponse{
 		Error:   false,
-		Message: "Autenticación exitosa",
+		Message: "Authentication successful",
 		Data: map[string]interface{}{
 			"user_uuid": user.UUID,
 			"email":     user.Email,
 			"role":      user.Role,
-			"token":     jwtToken.Token, // Incluye el token JWT en la respuesta
+			"token":     jwtToken.Token, // Includes the JWT token in the response.
 			"expiry":    jwtToken.Expiry,
 		},
 	}
 	utils.WriteJSON(w, http.StatusOK, response)
-	logger.InfoLog.Printf("Usuario %s autenticado exitosamente y token generado.", user.Email)
+	logger.InfoLog.Printf("User %s successfully authenticated and token generated.", user.Email)
 }
 
-// PublicRouteHandler es un ejemplo de un handler para una ruta pública.
+// PublicRouteHandler is an example of a handler for a public route.
 func (ac *AuthController) PublicRouteHandler(w http.ResponseWriter, r *http.Request) {
 	response := utils.JSONResponse{
 		Error:   false,
-		Message: "Esta es una ruta pública, accesible sin autenticación.",
+		Message: "This is a public route, accessible without authentication.",
 		Data:    nil,
 	}
 	utils.WriteJSON(w, http.StatusOK, response)
-	logger.InfoLog.Println("Acceso a ruta pública.")
+	logger.InfoLog.Println("Access to public route.")
 }

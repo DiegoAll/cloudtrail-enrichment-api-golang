@@ -17,13 +17,12 @@ func (sc *SystemController) HealthCheck(w http.ResponseWriter, r *http.Request) 
 
 	response := utils.JSONResponse{
 		Error:   false,
-		Message: "API está operativa",
+		Message: "Service is healthy",
 		Data: map[string]string{
-			"status": "OK",
-			"uptime": "server is running",
+			"status": "OK, server is running",
 		},
 	}
 
 	utils.WriteJSON(w, http.StatusOK, response)
-	logger.InfoLog.Println("Health check realizado: API operativa.")
+	logger.InfoLog.Println("Health check performed: API is up and running.")
 }
