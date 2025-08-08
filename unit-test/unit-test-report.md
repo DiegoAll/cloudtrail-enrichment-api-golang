@@ -1,6 +1,9 @@
 # Unit test Report
 
 
+For continuous integration (CI) control purposes, where many tools run tests to validate deployments or releases, it is a best practice to have unit tests in the main branch to ensure the code is always covered. However, for readability reasons and based on Git Flow, the unit test files will be kept in the develop branch.
+
+
 ## Package Coverage
 
     root@h0stn4m3:/home/diegoall/Projects/cloudtrail-enrichment-api-golang# go test ./... -coverprofile=coverage.out
